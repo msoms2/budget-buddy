@@ -1,0 +1,51 @@
+<?php
+
+namespace App\Traits;
+
+use App\Models\Currency;
+use Illuminate\Support\Facades\Auth;
+
+trait CurrencyConversion
+{
+    /**
+     * Get the currency-converted amount based on user's preference
+     *
+     * @return float
+     */
+    public function getConvertedAmount()
+    {
+        $userCurrency = Auth::user()->currency;
+        
+        if (!$userCurrency || !$this->currency) {
+            return $this->amount;
+        }
+
+        // If the transaction's currency matches the user's preference, return as is
+        if ($this->currency_id === $userCurrency->id) {
+            return $this->amount;
+        }
+
+        // Convert the amount from the transaction's currency to user's preferred currency
+        return $this->currency->convertTo($this->amount, $userCurrency);
+    }
+
+    /**
+     * Get the original amount in the transaction's original currency
+     *
+     * @return float
+     */
+    public function getOriginalAmount()
+    {
+        return $this->amount;
+    }
+
+    /**
+     * Get the currency symbol for this transaction
+     *
+     * @return string
+     */
+    public function getCurrencySymbol()
+    {
+        return $this->currency ? $this->currency->symbol : '$';
+    }
+}

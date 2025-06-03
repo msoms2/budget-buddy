@@ -1,0 +1,2721 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Http\Requests\Admin\UserRequest;
+use App\Models\Budget;
+use App\Models\Country;
+use App\Models\Creditor;
+use App\Models\Currency;
+use App\Models\Earning;
+use App\Models\Expense;
+use App\Models\Goal;
+use App\Models\Investment;
+use App\Models\Role;
+use App\Models\User;
+use App\Traits\CurrencyConverter;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Validation\ValidationException;
+use Inertia\Inertia;
+
+class AdminController extends Controller
+{
+    use CurrencyConverter;
+
+    /**
+     * Display admin dashboard
+     */
+    public function dashboard()
+    {
+        return Inertia::render('Admin/Dashboard');
+    }
+    use CurrencyConverter;
+
+    /**
+     * Display admin dashboard.
+     */
+    public function dashboard()
+    {
+        // Get counts for dashboard stats
+        $totalUsers = User::count();
+        $totalTransactions = Expense::count() + Earning::count();
+        $totalBudgets = Budget::count();
+        $totalExpenses = Expense::count();
+        $totalEarnings = Earning::count();
+        $totalCategories = \App\Models\ExpenseCategory::count() + \App\Models\EarningCategory::count();
+        
+        // Get recent activity
+        $recentUsers = User::latest()->take(5)->get();
+        $recentExpenses = Expense::with(['user', 'category'])->latest()->take(5)->get();
+        $recentEarnings = Earning::with(['user', 'category'])->latest()->take(5)->get();
+        
+        // Get user activity stats
+        $activeUsers = $this->getActiveUsers();
+        
+        // Get financial totals
+        $totalExpenseAmount = Expense::sum('amount');
+        $totalEarningAmount = Earning::sum('amount');
+        
+        // Get monthly growth data
+        $monthlyUserGrowth = $this->getMonthlyUserGrowth();
+        
+        // Get system health metrics
+        $avgTransactionsPerUser = $totalUsers > 0 ? round($totalTransactions / $totalUsers, 1) : 0;
+        $userActivityRate = $totalUsers > 0 ? round(($activeUsers / $totalUsers) * 100, 1) : 0;
+        
+        $stats = [
+            'users' => $totalUsers,
+            'transactions' => $totalTransactions,
+            'budgets' => $totalBudgets,
+            'expenses' => $totalExpenses,
+            'earnings' => $totalEarnings,
+            'categories' => $totalCategories,
+            'active_users' => $activeUsers,
+            'total_expense_amount' => $totalExpenseAmount,
+            'total_earning_amount' => $totalEarningAmount,
+            'avg_transactions_per_user' => $avgTransactionsPerUser,
+            'user_activity_rate' => $userActivityRate,
+            'monthly_user_growth' => $monthlyUserGrowth,
+        ];
+        
+        $recentActivity = [
+            'users' => $recentUsers,
+            'expenses' => $recentExpenses,
+            'earnings' => $recentEarnings,
+        ];
+        
+        return Inertia::render('Admin/Dashboard', [
+            'stats' => $stats,
+            'recentActivity' => $recentActivity
+        ]);
+    }
+
+    /**
+     * Get count of active users in last 30 days.
+     */
+    private function getActiveUsers()
+    {
+        return User::whereHas('expenses', function($query) {
+            $query->where('date', '>=', now()->subDays(30));
+        })->orWhereHas('earnings', function($query) {
+            $query->where('date', '>=', now()->subDays(30));
+        })->count();
+    }
+
+    /**
+     * Get monthly user growth data.
+     */
+    private function getMonthlyUserGrowth()
+    {
+        return User::selectRaw('MONTH(created_at) as month, COUNT(*) as count')
+            ->whereYear('created_at', now()->year)
+            ->groupBy('month')
+            ->pluck('count', 'month')
+            ->toArray();
+    }
+
+    /**
+     * Display admin dashboard.
+     */
+    public function dashboard()
+    {
+        // Get counts for dashboard stats
+        $totalUsers = User::count();
+        $totalTransactions = Expense::count() + Earning::count();
+        $totalBudgets = Budget::count();
+        $totalExpenses = Expense::count();
+        $totalEarnings = Earning::count();
+        $totalCategories = \App\Models\ExpenseCategory::count() + \App\Models\EarningCategory::count();
+        
+        // Get recent activity
+        $recentUsers = User::latest()->take(5)->get();
+        $recentExpenses = Expense::with(['user', 'category'])->latest()->take(5)->get();
+        $recentEarnings = Earning::with(['user', 'category'])->latest()->take(5)->get();
+        
+        // Get user activity stats
+        $activeUsers = User::whereHas('expenses', function($query) {
+            $query->where('date', '>=', now()->subDays(30));
+        })->orWhereHas('earnings', function($query) {
+            $query->where('date', '>=', now()->subDays(30));
+        })->count();
+        
+        // Get financial totals
+        $totalExpenseAmount = Expense::sum('amount');
+        $totalEarningAmount = Earning::sum('amount');
+        
+        // Get monthly growth data
+        $monthlyUserGrowth = User::selectRaw('MONTH(created_at) as month, COUNT(*) as count')
+            ->whereYear('created_at', now()->year)
+            ->groupBy('month')
+            ->pluck('count', 'month')
+            ->toArray();
+            
+        // Get system health metrics
+        $avgTransactionsPerUser = $totalUsers > 0 ? round($totalTransactions / $totalUsers, 1) : 0;
+        $userActivityRate = $totalUsers > 0 ? round(($activeUsers / $totalUsers) * 100, 1) : 0;
+        
+        $stats = [
+            'users' => $totalUsers,
+            'transactions' => $totalTransactions,
+            'budgets' => $totalBudgets,
+            'expenses' => $totalExpenses,
+            'earnings' => $totalEarnings,
+            'categories' => $totalCategories,
+            'active_users' => $activeUsers,
+            'total_expense_amount' => $totalExpenseAmount,
+            'total_earning_amount' => $totalEarningAmount,
+            'avg_transactions_per_user' => $avgTransactionsPerUser,
+            'user_activity_rate' => $userActivityRate,
+            'monthly_user_growth' => $monthlyUserGrowth,
+        ];
+        
+        $recentActivity = [
+            'users' => $recentUsers,
+            'expenses' => $recentExpenses,
+            'earnings' => $recentEarnings,
+        ];
+        
+        return Inertia::render('Admin/Dashboard', [
+            'stats' => $stats,
+            'recentActivity' => $recentActivity
+        ]);
+    }
+    
+    /**
+     * Display user management page.
+     */
+    public function users(Request $request)
+    {
+        $search = $request->input('search');
+        $role = $request->input('role');
+        $status = $request->input('status');
+        $sortField = $request->input('sort_field', 'created_at');
+        $sortDirection = $request->input('sort_direction', 'desc');
+        $perPage = $request->input('per_page', 15);
+        
+        $query = User::with(['roles', 'currency', 'country']);
+        
+        // Apply search filter
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', '%' . $search . '%')
+                  ->orWhere('email', 'like', '%' . $search . '%')
+                  ->orWhere('username', 'like', '%' . $search . '%');
+            });
+        }
+        
+        // Apply role filter
+        if ($role) {
+            $query->whereHas('roles', function($q) use ($role) {
+                $q->where('name', $role);
+            })->orWhere('role', $role);
+        }
+        
+        // Apply status filter
+        if ($status) {
+            switch ($status) {
+                case 'active':
+                    $query->active();
+                    break;
+                case 'suspended':
+                    $query->suspended();
+                    break;
+                case 'inactive':
+                    $query->whereNull('email_verified_at')
+                          ->where('created_at', '>=', now()->subDay());
+                    break;
+            }
+        }
+        
+        // Apply sorting
+        $query->orderBy($sortField, $sortDirection);
+        
+        $users = $query->paginate($perPage);
+        
+        // Transform users to include additional data
+        $users->getCollection()->transform(function ($user) {
+            $activitySummary = $user->getActivitySummary();
+            $financialSummary = $user->getFinancialSummary();
+            $recentActivity = $user->getRecentActivityCount();
+            
+            return array_merge($user->toArray(), [
+                'status' => $user->status,
+                'activity_summary' => $activitySummary,
+                'financial_summary' => $financialSummary,
+                'recent_activity' => $recentActivity,
+                'role_names' => $user->roles->pluck('name')->toArray(),
+                'last_activity' => $user->expenses()->latest('date')->first()?->date ??
+                                 $user->earnings()->latest('date')->first()?->date,
+                'is_online' => $user->isOnline(),
+                'last_seen' => $user->last_seen,
+                'last_seen_formatted' => $user->getLastSeenFormatted(),
+            ]);
+        });
+        
+        // Get all roles for filter dropdown
+        $roles = Role::all(['id', 'name', 'description']);
+        
+        // Calculate user statistics
+        $totalUsers = User::count();
+        $onlineUsers = User::online()->count(); // Users online within last 5 minutes
+        $monthlyActiveUsers = User::active()->count(); // Users active in past month
+        $newUsersThisMonth = User::where('created_at', '>=', now()->startOfMonth())->count();
+        $newUsersLastMonth = User::whereBetween('created_at', [
+            now()->subMonth()->startOfMonth(),
+            now()->subMonth()->endOfMonth()
+        ])->count();
+        
+        // Calculate growth percentages
+        $userGrowth = $newUsersLastMonth > 0 ? 
+            round((($newUsersThisMonth - $newUsersLastMonth) / $newUsersLastMonth) * 100, 1) : 
+            ($newUsersThisMonth > 0 ? 100 : 0);
+        
+        $stats = [
+            'activeUsers' => $onlineUsers, // Changed to show online users
+            'onlineUsers' => $onlineUsers,
+            'monthlyActiveUsers' => $monthlyActiveUsers, // Added monthly active users
+            'newUsers' => $newUsersThisMonth,
+            'userGrowth' => $userGrowth > 0 ? $userGrowth : null,
+            'monthlyGrowth' => $userGrowth,
+        ];
+        
+        return Inertia::render('Admin/Users', [
+            'users' => $users,
+            'stats' => $stats,
+            'filters' => [
+                'search' => $search,
+                'role' => $role,
+                'status' => $status,
+                'sort_field' => $sortField,
+                'sort_direction' => $sortDirection,
+            ],
+            'roles' => $roles,
+        ]);
+    }
+    
+    /**
+     * Display user details.
+     */
+    public function showUser($id)
+    {
+        $user = User::with([
+            'roles',
+            'currency',
+            'country',
+            'expenses' => function($query) {
+                $query->with('category')->latest('date')->take(10);
+            },
+            'earnings' => function($query) {
+                $query->with('category')->latest('date')->take(10);
+            },
+            'goals' => function($query) {
+                $query->latest()->take(5);
+            },
+            'budgets' => function($query) {
+                $query->with('category')->latest()->take(5);
+            },
+            'investments' => function($query) {
+                $query->with('category')->latest()->take(5);
+            }
+        ])->findOrFail($id);
+        
+        // Get activity summary using existing User model methods
+        $activitySummary = $user->getActivitySummary();
+        $financialSummary = $user->getFinancialSummary();
+        $recentActivity = $user->getRecentActivityCount();
+        
+        // Get structured activity data using existing getUserActivity method
+        $activityResponse = $this->getUserActivity($user);
+        $activityData = json_decode($activityResponse->getContent(), true);
+        
+        // Extract timeline data
+        $timelineData = $activityData['timeline'] ?? [];
+        
+        // Transform activity data to match UserActivity.jsx expected structure
+        $now = now();
+        $thisMonthStart = $now->startOfMonth();
+        $lastMonthStart = $now->copy()->subMonth()->startOfMonth();
+        $lastMonthEnd = $now->copy()->subMonth()->endOfMonth();
+        
+        // Calculate this month's data
+        $thisMonthExpenses = $user->expenses()->where('date', '>=', $thisMonthStart)->sum('amount');
+        $thisMonthEarnings = $user->earnings()->where('date', '>=', $thisMonthStart)->sum('amount');
+        $thisMonthTransactions = $user->expenses()->where('date', '>=', $thisMonthStart)->count() +
+                                $user->earnings()->where('date', '>=', $thisMonthStart)->count();
+        
+        // Calculate last month's data
+        $lastMonthTransactions = $user->expenses()->whereBetween('date', [$lastMonthStart, $lastMonthEnd])->count() +
+                                $user->earnings()->whereBetween('date', [$lastMonthStart, $lastMonthEnd])->count();
+        
+        // Get top expense category
+        $topExpenseCategory = $user->expenses()->with('category')
+            ->selectRaw('category_id, COUNT(*) as count')
+            ->groupBy('category_id')
+            ->orderByDesc('count')
+            ->first();
+        
+        // Calculate average daily spending (last 30 days)
+        $thirtyDaysAgo = $now->copy()->subDays(30);
+        $recentExpenseAmount = $user->expenses()->where('date', '>=', $thirtyDaysAgo)->sum('amount');
+        $averageDailySpending = $recentExpenseAmount / 30;
+        
+        // Calculate average monthly income (based on total income divided by account age in months)
+        $accountAgeMonths = max(1, $now->diffInMonths($user->created_at));
+        $averageMonthlyIncome = $financialSummary['total_earnings'] / $accountAgeMonths;
+        
+        // Count income sources (unique earning categories)
+        $incomeSources = $user->earnings()->distinct('category_id')->count('category_id');
+        
+        // Calculate budget compliance (simplified - would need actual budget comparison logic)
+        $budgetCompliance = $user->budgets()->count() > 0 ? 75 : 0; // Placeholder
+        
+        // Calculate goal progress (simplified average)
+        $goals = $user->goals()->get();
+        $totalProgress = $goals->count() > 0 ? $goals->avg('progress') ?? 0 : 0;
+        
+        // Get last activity date
+        $lastExpense = $user->expenses()->latest('date')->first();
+        $lastEarning = $user->earnings()->latest('date')->first();
+        $lastActivity = null;
+        
+        if ($lastExpense && $lastEarning) {
+            $lastActivity = $lastExpense->date > $lastEarning->date ? $lastExpense->date : $lastEarning->date;
+        } elseif ($lastExpense) {
+            $lastActivity = $lastExpense->date;
+        } elseif ($lastEarning) {
+            $lastActivity = $lastEarning->date;
+        }
+        
+        // Structure activity data for UserActivity.jsx
+        $structuredActivityData = [
+            'transactions' => [
+                'total' => $activitySummary['total_transactions'],
+                'thisMonth' => $thisMonthTransactions,
+                'lastMonth' => $lastMonthTransactions
+            ],
+            'expenses' => [
+                'total' => $financialSummary['total_expenses'],
+                'thisMonth' => $thisMonthExpenses,
+                'averageDaily' => $averageDailySpending,
+                'topCategory' => $topExpenseCategory?->category?->name
+            ],
+            'income' => [
+                'total' => $financialSummary['total_earnings'],
+                'thisMonth' => $thisMonthEarnings,
+                'averageMonthly' => $averageMonthlyIncome,
+                'sources' => $incomeSources
+            ],
+            'budgets' => [
+                'active' => $activitySummary['total_budgets'],
+                'total' => $activitySummary['total_budgets'],
+                'compliance' => $budgetCompliance
+            ],
+            'goals' => [
+                'active' => $activitySummary['active_goals'],
+                'completed' => $activityData['stats']['completed_goals'] ?? 0,
+                'totalProgress' => round($totalProgress)
+            ],
+            'lastActivity' => $lastActivity
+        ];
+        
+        // Get monthly activity for the last 6 months (keep existing logic)
+        $monthlyActivity = [];
+        for ($i = 5; $i >= 0; $i--) {
+            $monthStart = now()->subMonths($i)->startOfMonth();
+            $monthEnd = now()->subMonths($i)->endOfMonth();
+            
+            $monthlyActivity[] = [
+                'month' => $monthStart->format('M Y'),
+                'expenses' => $user->expenses()->whereBetween('date', [$monthStart, $monthEnd])->count(),
+                'earnings' => $user->earnings()->whereBetween('date', [$monthStart, $monthEnd])->count(),
+                'expenses_amount' => $user->expenses()->whereBetween('date', [$monthStart, $monthEnd])->sum('amount'),
+                'earnings_amount' => $user->earnings()->whereBetween('date', [$monthStart, $monthEnd])->sum('amount'),
+            ];
+        }
+        
+        // Get all roles for role management
+        $allRoles = Role::all(['id', 'name', 'description']);
+        
+        // Transform user data
+        $userData = array_merge($user->toArray(), [
+            'status' => $user->status,
+            'activity_summary' => $activitySummary,
+            'financial_summary' => $financialSummary,
+            'recent_activity' => $recentActivity,
+            'monthly_activity' => $monthlyActivity,
+            'role_names' => $user->roles->pluck('name')->toArray(),
+        ]);
+        
+        return Inertia::render('Admin/UserDetails', [
+            'user' => $userData,
+            'activityData' => $structuredActivityData,
+            'timelineData' => $timelineData,
+            'transactions' => [], // Transactions are handled in separate tab with API calls
+            'categories' => [], // Categories are handled in separate tab
+            'paymentMethods' => [], // Payment methods are handled in separate tab
+            'availableRoles' => $allRoles,
+        ]);
+    }
+
+    /**
+     * Display all transactions across users.
+     */
+    public function transactions(Request $request)
+    {
+        // Handle search and filtering parameters
+        $search = $request->input('search');
+        $advancedSearch = $request->input('advanced_search') ? json_decode($request->input('advanced_search')) : null;
+        $type = $request->input('type'); // 'expense' or 'income'
+        $categoryId = $request->input('category_id');
+        $userId = $request->input('user_id');
+        $amountMin = $request->input('amount_min');
+        $amountMax = $request->input('amount_max');
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+        $sortField = $request->input('sort_field', 'date');
+        $sortDirection = $request->input('sort_direction', 'desc');
+        
+        // Get expenses
+        $expensesQuery = Expense::with(['category', 'user']);
+        
+        // Get earnings
+        $earningsQuery = Earning::with(['category', 'user']);
+        
+        // Apply search filter
+        if ($search) {
+            $expensesQuery->where(function($q) use ($search) {
+                $q->where('name', 'like', '%' . $search . '%')
+                  ->orWhere('description', 'like', '%' . $search . '%')
+                  ->orWhereHas('category', function($q) use ($search) {
+                      $q->where('name', 'like', '%' . $search . '%');
+                  });
+            });
+            
+            $earningsQuery->where(function($q) use ($search) {
+                $q->where('name', 'like', '%' . $search . '%')
+                  ->orWhere('description', 'like', '%' . $search . '%')
+                  ->orWhereHas('category', function($q) use ($search) {
+                      $q->where('name', 'like', '%' . $search . '%');
+                  });
+            });
+        }
+        
+        // Apply user filter
+        if ($userId) {
+            $expensesQuery->where('user_id', $userId);
+            $earningsQuery->where('user_id', $userId);
+        }
+        
+        // Apply category filter
+        if ($categoryId) {
+            // Handle category filter for both expense and income categories
+            if (strpos($categoryId, 'exp-') === 0) {
+                $realCategoryId = str_replace('exp-', '', $categoryId);
+                $expensesQuery->where('category_id', $realCategoryId);
+                // Don't include earnings if filtering by expense category
+                $earningsQuery->whereRaw('1 = 0'); // This will exclude all earnings
+            } elseif (strpos($categoryId, 'inc-') === 0) {
+                $realCategoryId = str_replace('inc-', '', $categoryId);
+                $earningsQuery->where('category_id', $realCategoryId);
+                // Don't include expenses if filtering by income category
+                $expensesQuery->whereRaw('1 = 0'); // This will exclude all expenses
+            }
+        }
+        
+        // Apply date filters
+        if ($startDate) {
+            $expensesQuery->where('date', '>=', $startDate);
+            $earningsQuery->where('date', '>=', $startDate);
+        }
+        
+        if ($endDate) {
+            $expensesQuery->where('date', '<=', $endDate);
+            $earningsQuery->where('date', '<=', $endDate);
+        }
+        
+        // Get all expenses and earnings - convert to array format
+        $transactions = [];
+        
+        // Apply type filter if provided and get the transactions
+        if ($type === 'expense' || $type === 'all' || !$type) {
+            $expensesQuery->get()->each(function ($expense) use (&$transactions) {
+                try {
+                    $transactions[] = [
+                        'id' => 'expense-' . $expense->id,
+                        'name' => $expense->name ?? 'Unnamed Expense',
+                        'description' => $expense->description ?? '',
+                        'amount' => -$expense->amount, // Negative for expenses
+                        'date' => $expense->date ?? $expense->created_at,
+                        'category' => $expense->category ? $expense->category->name : 'Uncategorized',
+                        'category_id' => $expense->category_id,
+                        'type' => 'expense',
+                        'user_id' => $expense->user_id,
+                        'user_name' => $expense->user ? $expense->user->name : 'Unknown User',
+                        'user_email' => $expense->user ? $expense->user->email : '',
+                    ];
+                } catch (\Exception $e) {
+                    // Skip problematic records to prevent page crash
+                }
+            });
+        }
+        
+        if ($type === 'income' || $type === 'all' || !$type) {
+            $earningsQuery->get()->each(function ($earning) use (&$transactions) {
+                try {
+                    $transactions[] = [
+                        'id' => 'income-' . $earning->id,
+                        'name' => $earning->name ?? 'Unnamed Income',
+                        'description' => $earning->description ?? '',
+                        'amount' => $earning->amount, // Positive for earnings
+                        'date' => $earning->date ?? $earning->created_at,
+                        'category' => $earning->category ? $earning->category->name : 'Uncategorized',
+                        'category_id' => $earning->category_id,
+                        'type' => 'income',
+                        'user_id' => $earning->user_id,
+                        'user_name' => $earning->user ? $earning->user->name : 'Unknown User',
+                        'user_email' => $earning->user ? $earning->user->email : '',
+                    ];
+                } catch (\Exception $e) {
+                    // Skip problematic records to prevent page crash
+                }
+            });
+        }
+        
+        // Filter by amount if provided
+        $collection = collect($transactions);
+        
+        if ($amountMin !== null) {
+            $collection = $collection->filter(function ($transaction) use ($amountMin) {
+                return abs($transaction['amount']) >= (float) $amountMin;
+            });
+        }
+        
+        if ($amountMax !== null) {
+            $collection = $collection->filter(function ($transaction) use ($amountMax) {
+                return abs($transaction['amount']) <= (float) $amountMax;
+            });
+        }
+        
+        // Sort the combined results
+        if ($sortField && $sortDirection) {
+            $collection = $sortDirection === 'asc' 
+                ? $collection->sortBy($sortField)
+                : $collection->sortByDesc($sortField);
+        }
+        
+        // Paginate the results
+        $perPage = $request->input('per_page', 15);
+        $page = $request->input('page', 1);
+        $total = $collection->count();
+        
+        // Slice the array to get the items for the current page
+        $items = $collection->forPage($page, $perPage)->values()->all();
+        
+        // Calculate total statistics from all filtered transactions
+        $now = new \DateTime();
+        $weekAgo = (clone $now)->modify('-7 days');
+        
+        $totalStatistics = [
+            'total_count' => $collection->count(),
+            'total_volume' => $collection->sum(function ($transaction) {
+                return abs($transaction['amount']);
+            }),
+            'total_income' => $collection->where('type', 'income')->sum('amount'),
+            'total_expenses' => abs($collection->where('type', 'expense')->sum('amount')),
+            'net_amount' => $collection->sum('amount'),
+            'recent_activity' => $collection->filter(function ($transaction) use ($weekAgo) {
+                $transactionDate = new \DateTime($transaction['date']);
+                return $transactionDate >= $weekAgo;
+            })->count(),
+        ];
+        
+        // Create a custom paginator instance
+        $paginator = new \Illuminate\Pagination\LengthAwarePaginator(
+            $items,
+            $total,
+            $perPage,
+            $page,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
+        
+        // Convert to array with data key matching what the React component expects
+        $paginatedTransactions = $paginator->toArray();
+        
+        // Get all categories (both expense and income)
+        $categories = array_merge(
+            \App\Models\ExpenseCategory::select(['id', 'name'])->get()->map(function ($cat) {
+                return ['id' => 'exp-' . $cat->id, 'name' => $cat->name . ' (Expense)'];
+            })->toArray(),
+            \App\Models\EarningCategory::select(['id', 'name'])->get()->map(function ($cat) {
+                return ['id' => 'inc-' . $cat->id, 'name' => $cat->name . ' (Income)'];
+            })->toArray()
+        );
+        
+        // Get all users
+        $users = \App\Models\User::select(['id', 'name', 'email', 'avatar'])->get()
+            ->map(function ($user) {
+                return array_merge($user->toArray(), [
+                ]);
+            });
+        
+        // Return paginated results with filters and other data for dropdowns
+        return Inertia::render('Admin/Transactions', [
+            'transactions' => $paginatedTransactions,
+            'statistics' => $totalStatistics,
+            'filters' => [
+                'search' => $search,
+                'type' => $type,
+                'category_id' => $categoryId,
+                'user_id' => $userId,
+                'amount_min' => $amountMin,
+                'amount_max' => $amountMax,
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+                'sort_field' => $sortField,
+                'sort_direction' => $sortDirection,
+            ],
+            'categories' => $categories,
+            'users' => $users,
+        ]);
+    }
+
+    /**
+     * Show user creation form.
+     */
+    public function createUser()
+    {
+        $roles = Role::all();
+        $currencies = Currency::all();
+        $countries = Country::all();
+        
+        return Inertia::render('Admin/Users/Create', [
+            'roles' => $roles,
+            'currencies' => $currencies,
+            'countries' => $countries,
+        ]);
+    }
+
+    /**
+     * Store a new user.
+     */
+    public function storeUser(UserRequest $request)
+    {
+        DB::beginTransaction();
+        
+        try {
+            $userData = $request->validated();
+            
+            // Hash password if provided
+            if (isset($userData['password'])) {
+                $userData['password'] = Hash::make($userData['password']);
+            }
+            
+            // Remove role_ids from user data
+            $roleIds = $userData['role_ids'] ?? [];
+            unset($userData['role_ids']);
+            
+            // Create user
+            $user = User::create($userData);
+            
+            // Assign roles if provided
+            if (!empty($roleIds)) {
+                $user->roles()->sync($roleIds);
+            }
+            
+            DB::commit();
+            
+            return redirect()->route('admin.users')->with('success', 'User created successfully.');
+            
+        } catch (\Exception $e) {
+            DB::rollback();
+            throw ValidationException::withMessages([
+                'general' => 'Failed to create user: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Show user edit form.
+     */
+    public function editUser(User $user)
+    {
+        $user->load('roles');
+        $roles = Role::all();
+        $currencies = Currency::all();
+        $countries = Country::all();
+        
+        return Inertia::render('Admin/Users/Edit', [
+            'user' => $user,
+            'roles' => $roles,
+            'currencies' => $currencies,
+            'countries' => $countries,
+        ]);
+    }
+
+    /**
+     * Update a user.
+     */
+    public function updateUser(UserRequest $request, User $user)
+    {
+        DB::beginTransaction();
+        
+        try {
+            $userData = $request->validated();
+            
+            // Hash password if provided
+            if (isset($userData['password']) && !empty($userData['password'])) {
+                $userData['password'] = Hash::make($userData['password']);
+            } else {
+                unset($userData['password']);
+            }
+            
+            // Remove role_ids from user data
+            $roleIds = $userData['role_ids'] ?? [];
+            unset($userData['role_ids']);
+            
+            // Update user
+            $user->update($userData);
+            
+            // Update roles if provided
+            if (!empty($roleIds)) {
+                $user->roles()->sync($roleIds);
+            }
+            
+            DB::commit();
+            
+            return redirect()->route('admin.users')->with('success', 'User updated successfully.');
+            
+        } catch (\Exception $e) {
+            DB::rollback();
+            throw ValidationException::withMessages([
+                'general' => 'Failed to update user: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Delete a user.
+     */
+    public function destroyUser(User $user)
+    {
+        // Prevent deleting current admin user
+        if ($user->id === auth()->id()) {
+            return response()->json([
+                'message' => 'Cannot delete your own account.'
+            ], 403);
+        }
+        
+        // Check if user has any dependent data
+        $hasTransactions = $user->expenses()->exists() || $user->earnings()->exists();
+        $hasGoals = $user->goals()->exists();
+        $hasInvestments = $user->investments()->exists();
+        
+        if ($hasTransactions || $hasGoals || $hasInvestments) {
+            return response()->json([
+                'message' => 'Cannot delete user with existing transactions, goals, or investments. Consider suspending the account instead.'
+            ], 422);
+        }
+        
+        DB::beginTransaction();
+        
+        try {
+            // Detach roles
+            $user->roles()->detach();
+            
+            // Delete user
+            $user->delete();
+            
+            DB::commit();
+            
+            return response()->json([
+                'message' => 'User deleted successfully.'
+            ]);
+            
+        } catch (\Exception $e) {
+            DB::rollback();
+            return response()->json([
+                'message' => 'Failed to delete user: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get user activity statistics.
+     */
+    public function getUserActivity(User $user)
+    {
+        $now = Carbon::now();
+        $thirtyDaysAgo = $now->copy()->subDays(30);
+        $sixMonthsAgo = $now->copy()->subMonths(6);
+        
+        // Basic activity stats
+        $stats = [
+            'total_transactions' => $user->expenses()->count() + $user->earnings()->count(),
+            'total_expenses' => $user->expenses()->count(),
+            'total_earnings' => $user->earnings()->count(),
+            'total_goals' => $user->goals()->count(),
+            'active_goals' => $user->goals()->where('status', 'active')->count(),
+            'completed_goals' => $user->goals()->where('status', 'completed')->count(),
+            'total_budgets' => $user->budgets()->count(),
+            'active_budgets' => $user->budgets()->where('start_date', '<=', $now)
+                ->where('end_date', '>=', $now)->count(),
+        ];
+        
+        // Recent activity (last 30 days)
+        $recentActivity = [
+            'expenses_count' => $user->expenses()->where('date', '>=', $thirtyDaysAgo)->count(),
+            'earnings_count' => $user->earnings()->where('date', '>=', $thirtyDaysAgo)->count(),
+            'expenses_amount' => $user->expenses()->where('date', '>=', $thirtyDaysAgo)->sum('amount'),
+            'earnings_amount' => $user->earnings()->where('date', '>=', $thirtyDaysAgo)->sum('amount'),
+        ];
+        
+        // Monthly activity for chart (last 6 months)
+        $monthlyActivity = [];
+        for ($i = 5; $i >= 0; $i--) {
+            $monthStart = $now->copy()->subMonths($i)->startOfMonth();
+            $monthEnd = $now->copy()->subMonths($i)->endOfMonth();
+            
+            $monthlyActivity[] = [
+                'month' => $monthStart->format('M Y'),
+                'expenses' => $user->expenses()->whereBetween('date', [$monthStart, $monthEnd])->count(),
+                'earnings' => $user->earnings()->whereBetween('date', [$monthStart, $monthEnd])->count(),
+                'expenses_amount' => $user->expenses()->whereBetween('date', [$monthStart, $monthEnd])->sum('amount'),
+                'earnings_amount' => $user->earnings()->whereBetween('date', [$monthStart, $monthEnd])->sum('amount'),
+            ];
+        }
+        
+        // Financial summary
+        $financialSummary = [
+            'total_expenses_amount' => $user->expenses()->sum('amount'),
+            'total_earnings_amount' => $user->earnings()->sum('amount'),
+            'net_worth' => $user->earnings()->sum('amount') - $user->expenses()->sum('amount'),
+            'avg_expense_amount' => $user->expenses()->avg('amount') ?? 0,
+            'avg_earning_amount' => $user->earnings()->avg('amount') ?? 0,
+        ];
+
+        // Get activity timeline
+        $timeline = $this->getUserActivityTimeline($user);
+        
+        return response()->json([
+            'stats' => $stats,
+            'recent_activity' => $recentActivity,
+            'monthly_activity' => $monthlyActivity,
+            'financial_summary' => $financialSummary,
+            'timeline' => $timeline,
+        ]);
+    }
+
+    /**
+     * Get user activity timeline for chronological display.
+     */
+    public function getUserActivityTimeline(User $user, $limit = 20)
+    {
+        $timeline = [];
+
+        // Get recent expenses
+        $recentExpenses = $user->expenses()
+            ->with('category')
+            ->orderBy('date', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->take($limit / 2)
+            ->get();
+
+        foreach ($recentExpenses as $expense) {
+            $timeline[] = [
+                'id' => 'expense-' . $expense->id,
+                'type' => 'expense',
+                'name' => $expense->name,
+                'description' => $expense->description,
+                'amount' => $expense->amount,
+                'category' => $expense->category ? $expense->category->name : null,
+                'timestamp' => $expense->date ?: $expense->created_at,
+                'created_at' => $expense->created_at,
+                'source' => 'transaction',
+            ];
+        }
+
+        // Get recent earnings
+        $recentEarnings = $user->earnings()
+            ->with('category')
+            ->orderBy('date', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->take($limit / 2)
+            ->get();
+
+        foreach ($recentEarnings as $earning) {
+            $timeline[] = [
+                'id' => 'earning-' . $earning->id,
+                'type' => 'earning',
+                'name' => $earning->name,
+                'description' => $earning->description,
+                'amount' => $earning->amount,
+                'category' => $earning->category ? $earning->category->name : null,
+                'timestamp' => $earning->date ?: $earning->created_at,
+                'created_at' => $earning->created_at,
+                'source' => 'transaction',
+            ];
+        }
+
+        // Get recent goals
+        $recentGoals = $user->goals()
+            ->orderBy('created_at', 'desc')
+            ->take(5)
+            ->get();
+
+        foreach ($recentGoals as $goal) {
+            $timeline[] = [
+                'id' => 'goal-' . $goal->id,
+                'type' => 'goal_created',
+                'name' => $goal->name,
+                'description' => $goal->description,
+                'target_amount' => $goal->target_amount ?? null,
+                'progress' => $goal->progress ?? 0,
+                'timestamp' => $goal->created_at,
+                'created_at' => $goal->created_at,
+                'source' => 'goal',
+            ];
+        }
+
+        // Get recent budgets
+        $recentBudgets = $user->budgets()
+            ->with('category')
+            ->orderBy('created_at', 'desc')
+            ->take(5)
+            ->get();
+
+        foreach ($recentBudgets as $budget) {
+            $timeline[] = [
+                'id' => 'budget-' . $budget->id,
+                'type' => 'budget_created',
+                'name' => $budget->name ?? 'Budget',
+                'category' => $budget->category ? $budget->category->name : 'General',
+                'amount' => $budget->amount ?? null,
+                'timestamp' => $budget->created_at,
+                'created_at' => $budget->created_at,
+                'source' => 'budget',
+            ];
+        }
+
+        // Add login activity (simulated - in real implementation, you'd track login sessions)
+        if ($user->last_seen) {
+            $timeline[] = [
+                'id' => 'login-' . $user->id . '-' . $user->last_seen->timestamp,
+                'type' => 'login',
+                'name' => 'Account Login',
+                'description' => 'User signed in to their account',
+                'timestamp' => $user->last_seen,
+                'created_at' => $user->last_seen,
+                'source' => 'authentication',
+            ];
+        }
+
+        // Add account creation activity
+        $timeline[] = [
+            'id' => 'registration-' . $user->id,
+            'type' => 'account_change',
+            'name' => 'Account Created',
+            'description' => 'User account was created',
+            'action' => 'Account registration',
+            'timestamp' => $user->created_at,
+            'created_at' => $user->created_at,
+            'source' => 'registration',
+        ];
+
+        // Add profile update activity (if profile was updated after creation)
+        if ($user->updated_at && $user->updated_at != $user->created_at) {
+            $timeline[] = [
+                'id' => 'profile-update-' . $user->id,
+                'type' => 'profile_update',
+                'name' => 'Profile Updated',
+                'description' => 'User updated their profile information',
+                'timestamp' => $user->updated_at,
+                'created_at' => $user->updated_at,
+                'source' => 'profile',
+            ];
+        }
+
+        // Sort timeline by timestamp (most recent first)
+        usort($timeline, function ($a, $b) {
+            $timeA = strtotime($a['timestamp']);
+            $timeB = strtotime($b['timestamp']);
+            return $timeB - $timeA; // Descending order
+        });
+
+        // Limit results
+        return array_slice($timeline, 0, $limit);
+    }
+
+    /**
+     * Get user activity timeline as JSON response.
+     */
+    public function getUserActivityTimelineJson(User $user, Request $request)
+    {
+        $limit = $request->input('limit', 20);
+        $timeline = $this->getUserActivityTimeline($user, $limit);
+        
+        return response()->json([
+            'timeline' => $timeline,
+            'total' => count($timeline)
+        ]);
+    }
+
+    /**
+     * Get user transactions with filtering and pagination.
+     */
+    public function getUserTransactions(Request $request, User $user)
+    {
+        $type = $request->input('type', 'all'); // 'all', 'expense', 'income'
+        $search = $request->input('search');
+        $categoryId = $request->input('category_id');
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+        $perPage = $request->input('per_page', 15);
+        
+        $transactions = [];
+        
+        // Get expenses
+        if ($type === 'all' || $type === 'expense') {
+            $expensesQuery = $user->expenses()->with(['category']);
+            
+            if ($search) {
+                $expensesQuery->where(function($q) use ($search) {
+                    $q->where('name', 'like', '%' . $search . '%')
+                      ->orWhere('description', 'like', '%' . $search . '%');
+                });
+            }
+            
+            if ($categoryId) {
+                $expensesQuery->where('category_id', $categoryId);
+            }
+            
+            if ($startDate) {
+                $expensesQuery->where('date', '>=', $startDate);
+            }
+            
+            if ($endDate) {
+                $expensesQuery->where('date', '<=', $endDate);
+            }
+            
+            $expensesQuery->get()->each(function ($expense) use (&$transactions) {
+                $transactions[] = [
+                    'id' => 'expense-' . $expense->id,
+                    'name' => $expense->name,
+                    'description' => $expense->description,
+                    'amount' => -$expense->amount,
+                    'date' => $expense->date,
+                    'category' => $expense->category ? $expense->category->name : 'Uncategorized',
+                    'type' => 'expense',
+                    'created_at' => $expense->created_at,
+                ];
+            });
+        }
+        
+        // Get earnings
+        if ($type === 'all' || $type === 'income') {
+            $earningsQuery = $user->earnings()->with(['category']);
+            
+            if ($search) {
+                $earningsQuery->where(function($q) use ($search) {
+                    $q->where('name', 'like', '%' . $search . '%')
+                      ->orWhere('description', 'like', '%' . $search . '%');
+                });
+            }
+            
+            if ($categoryId) {
+                $earningsQuery->where('category_id', $categoryId);
+            }
+            
+            if ($startDate) {
+                $earningsQuery->where('date', '>=', $startDate);
+            }
+            
+            if ($endDate) {
+                $earningsQuery->where('date', '<=', $endDate);
+            }
+            
+            $earningsQuery->get()->each(function ($earning) use (&$transactions) {
+                $transactions[] = [
+                    'id' => 'income-' . $earning->id,
+                    'name' => $earning->name,
+                    'description' => $earning->description,
+                    'amount' => $earning->amount,
+                    'date' => $earning->date,
+                    'category' => $earning->category ? $earning->category->name : 'Uncategorized',
+                    'type' => 'income',
+                    'created_at' => $earning->created_at,
+                ];
+            });
+        }
+        
+        // Sort and paginate
+        $collection = collect($transactions)->sortByDesc('date');
+        $total = $collection->count();
+        $page = $request->input('page', 1);
+        $items = $collection->forPage($page, $perPage)->values()->all();
+        
+        $paginator = new \Illuminate\Pagination\LengthAwarePaginator(
+            $items,
+            $total,
+            $perPage,
+            $page,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
+        
+        return response()->json($paginator->toArray());
+    }
+
+    /**
+     * Update user roles.
+     */
+    public function updateUserRoles(Request $request, User $user)
+    {
+        $request->validate([
+            'role_ids' => 'required|array',
+            'role_ids.*' => 'exists:roles,id'
+        ]);
+        
+        try {
+            $user->roles()->sync($request->role_ids);
+            
+            return response()->json([
+                'message' => 'User roles updated successfully.',
+                'roles' => $user->roles()->get()
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to update user roles: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Reset user password.
+     */
+    public function resetUserPassword(Request $request, User $user)
+    {
+        $request->validate([
+            'password' => 'required|string|min:8|confirmed',
+            'send_email' => 'boolean'
+        ]);
+        
+        try {
+            $user->update([
+                'password' => Hash::make($request->password)
+            ]);
+            
+            // Optionally send email notification
+            if ($request->boolean('send_email')) {
+                // Send password reset notification email
+                // This would require a custom mail class
+            }
+            
+            return response()->json([
+                'message' => 'Password reset successfully.'
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to reset password: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Update user status (active/suspended/inactive).
+     */
+    public function updateUserStatus(Request $request, User $user)
+    {
+        $request->validate([
+            'status' => 'required|string|in:active,suspended,inactive',
+            'reason' => 'nullable|string|max:500'
+        ]);
+        
+        // Prevent changing own status
+        if ($user->id === auth()->id()) {
+            return response()->json([
+                'message' => 'Cannot change your own account status.'
+            ], 403);
+        }
+        
+        try {
+            // For now, we'll store status in a custom field
+            // In a full implementation, you might want to add a status column to users table
+            $user->update([
+                'email_verified_at' => $request->status === 'active' ? ($user->email_verified_at ?? now()) : null
+            ]);
+            
+            return response()->json([
+                'message' => 'User status updated successfully.',
+                'status' => $request->status
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to update user status: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Handle bulk user actions.
+     */
+    public function bulkUserActions(Request $request)
+    {
+        $request->validate([
+            'action' => 'required|string|in:delete,suspend,activate,export',
+            'user_ids' => 'required|array|min:1',
+            'user_ids.*' => 'exists:users,id'
+        ]);
+        
+        $userIds = $request->user_ids;
+        $action = $request->action;
+        
+        // Prevent bulk actions on current user
+        if (in_array(auth()->id(), $userIds)) {
+            return response()->json([
+                'message' => 'Cannot perform bulk actions on your own account.'
+            ], 403);
+        }
+        
+        DB::beginTransaction();
+        
+        try {
+            $successCount = 0;
+            $errors = [];
+            
+            foreach ($userIds as $userId) {
+                $user = User::find($userId);
+                if (!$user) {
+                    $errors[] = "User with ID {$userId} not found.";
+                    continue;
+                }
+                
+                switch ($action) {
+                    case 'delete':
+                        // Check if user has dependent data
+                        $hasData = $user->expenses()->exists() || $user->earnings()->exists() ||
+                                  $user->goals()->exists() || $user->investments()->exists();
+                        
+                        if ($hasData) {
+                            $errors[] = "Cannot delete user {$user->name} - has existing data.";
+                            continue 2;
+                        }
+                        
+                        $user->roles()->detach();
+                        $user->delete();
+                        break;
+                        
+                    case 'suspend':
+                    case 'activate':
+                        $user->update([
+                            'email_verified_at' => $action === 'activate' ? ($user->email_verified_at ?? now()) : null
+                        ]);
+                        break;
+                        
+                    case 'export':
+                        // This would trigger an export job for user data
+                        // Implementation would depend on your export system
+                        break;
+                }
+                
+                $successCount++;
+            }
+            
+            DB::commit();
+            
+            $message = "Successfully processed {$successCount} users.";
+            if (!empty($errors)) {
+                $message .= " Errors: " . implode(', ', $errors);
+            }
+            
+            return response()->json([
+                'message' => $message,
+                'success_count' => $successCount,
+                'errors' => $errors
+            ]);
+            
+        } catch (\Exception $e) {
+            DB::rollback();
+            return response()->json([
+                'message' => 'Bulk action failed: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Export user data.
+     */
+    public function exportUserData(User $user)
+    {
+        try {
+            $userData = [
+                'user_info' => $user->only([
+                    'id', 'name', 'username', 'email', 'phone', 'bio',
+                    'date_of_birth', 'created_at', 'updated_at'
+                ]),
+                'roles' => $user->roles()->get(['name', 'description']),
+                'expenses' => $user->expenses()->with('category')->get(),
+                'earnings' => $user->earnings()->with('category')->get(),
+                'goals' => $user->goals()->get(),
+                'budgets' => $user->budgets()->with('category')->get(),
+                'investments' => $user->investments()->with('category')->get(),
+                'export_date' => now()->toISOString(),
+            ];
+            
+            $filename = "user_data_{$user->id}_{$user->name}_{now()->format('Y-m-d')}.json";
+            
+            return response()->json($userData)
+                ->header('Content-Disposition', "attachment; filename=\"{$filename}\"")
+                ->header('Content-Type', 'application/json');
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to export user data: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Categories analytics for admin dashboard.
+     */
+    public function categoriesAnalytics(Request $request)
+    {
+        try {
+            $startDate = $request->input('start_date', now()->subYear()->format('Y-m-d'));
+            $endDate = $request->input('end_date', now()->format('Y-m-d'));
+            $userId = $request->input('user_id'); // Optional drill-down to specific user
+            
+            // Total categories and subcategories count
+            $totalExpenseCategories = \App\Models\ExpenseCategory::count();
+            $totalEarningCategories = \App\Models\EarningCategory::count();
+            $totalSubCategories = \App\Models\SubCategory::count();
+            
+            // Base queries for filtering
+            $expenseQuery = \App\Models\Expense::with(['category', 'user'])
+                ->whereBetween('date', [$startDate, $endDate]);
+            $earningQuery = \App\Models\Earning::with(['category', 'user'])
+                ->whereBetween('date', [$startDate, $endDate]);
+                
+            if ($userId) {
+                $expenseQuery->where('user_id', $userId);
+                $earningQuery->where('user_id', $userId);
+            }
+            
+            // Spending distribution by expense categories
+            $expenseDistribution = $expenseQuery
+                ->selectRaw('category_id, COUNT(*) as transaction_count, SUM(amount) as total_amount')
+                ->groupBy('category_id')
+                ->with('category')
+                ->get()
+                ->map(function ($item) {
+                    return [
+                        'category_id' => $item->category_id,
+                        'category_name' => $item->category ? $item->category->name : 'Uncategorized',
+                        'transaction_count' => $item->transaction_count,
+                        'total_amount' => $item->total_amount,
+                        'type' => 'expense'
+                    ];
+                });
+                
+            // Income distribution by earning categories
+            $incomeDistribution = $earningQuery
+                ->selectRaw('category_id, COUNT(*) as transaction_count, SUM(amount) as total_amount')
+                ->groupBy('category_id')
+                ->with('category')
+                ->get()
+                ->map(function ($item) {
+                    return [
+                        'category_id' => $item->category_id,
+                        'category_name' => $item->category ? $item->category->name : 'Uncategorized',
+                        'transaction_count' => $item->transaction_count,
+                        'total_amount' => $item->total_amount,
+                        'type' => 'earning'
+                    ];
+                });
+            
+            // Category performance metrics
+            $mostUsedExpenseCategory = $expenseDistribution->sortByDesc('transaction_count')->first();
+            $leastUsedExpenseCategory = $expenseDistribution->sortBy('transaction_count')->first();
+            $highestSpendingCategory = $expenseDistribution->sortByDesc('total_amount')->first();
+            $lowestSpendingCategory = $expenseDistribution->sortBy('total_amount')->first();
+            
+            // Calculate average spending per category
+            $avgSpendingPerCategory = $expenseDistribution->avg('total_amount');
+            
+            // Category utilization rates (categories with transactions vs total categories)
+            $activeExpenseCategories = $expenseDistribution->count();
+            $activeEarningCategories = $incomeDistribution->count();
+            $expenseUtilizationRate = $totalExpenseCategories > 0 ?
+                round(($activeExpenseCategories / $totalExpenseCategories) * 100, 2) : 0;
+            $earningUtilizationRate = $totalEarningCategories > 0 ?
+                round(($activeEarningCategories / $totalEarningCategories) * 100, 2) : 0;
+            
+            // Monthly trends for categories
+            $monthlyTrends = [];
+            for ($i = 5; $i >= 0; $i--) {
+                $monthStart = now()->subMonths($i)->startOfMonth();
+                $monthEnd = now()->subMonths($i)->endOfMonth();
+                
+                $monthExpenses = \App\Models\Expense::selectRaw('category_id, COUNT(*) as count')
+                    ->whereBetween('date', [$monthStart, $monthEnd])
+                    ->when($userId, fn($q) => $q->where('user_id', $userId))
+                    ->groupBy('category_id')
+                    ->get();
+                    
+                $monthEarnings = \App\Models\Earning::selectRaw('category_id, COUNT(*) as count')
+                    ->whereBetween('date', [$monthStart, $monthEnd])
+                    ->when($userId, fn($q) => $q->where('user_id', $userId))
+                    ->groupBy('category_id')
+                    ->get();
+                
+                $monthlyTrends[] = [
+                    'month' => $monthStart->format('M Y'),
+                    'expense_categories_used' => $monthExpenses->count(),
+                    'earning_categories_used' => $monthEarnings->count(),
+                    'total_expense_transactions' => $monthExpenses->sum('count'),
+                    'total_earning_transactions' => $monthEarnings->sum('count')
+                ];
+            }
+            
+            return Inertia::render('Admin/CategoriesAnalytics', [
+                'overview' => [
+                    'total_expense_categories' => $totalExpenseCategories,
+                    'total_earning_categories' => $totalEarningCategories,
+                    'total_subcategories' => $totalSubCategories,
+                    'active_expense_categories' => $activeExpenseCategories,
+                    'active_earning_categories' => $activeEarningCategories,
+                    'expense_utilization_rate' => $expenseUtilizationRate,
+                    'earning_utilization_rate' => $earningUtilizationRate
+                ],
+                'distribution' => [
+                    'expenses' => $expenseDistribution->values(),
+                    'earnings' => $incomeDistribution->values()
+                ],
+                'performance' => [
+                    'most_used_expense_category' => $mostUsedExpenseCategory,
+                    'least_used_expense_category' => $leastUsedExpenseCategory,
+                    'highest_spending_category' => $highestSpendingCategory,
+                    'lowest_spending_category' => $lowestSpendingCategory,
+                    'average_spending_per_category' => round($avgSpendingPerCategory, 2)
+                ],
+                'trends' => $monthlyTrends,
+                'filters' => [
+                    'start_date' => $startDate,
+                    'end_date' => $endDate,
+                    'user_id' => $userId
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch categories analytics: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Budget analytics for admin dashboard.
+     */
+    public function budgetAnalytics(Request $request)
+    {
+        try {
+            // Validate currency configuration first
+            $defaultCurrency = $this->validateCurrencyConfiguration();
+
+            \Log::debug('Starting budget analytics calculation', [
+                'start_date' => $request->input('start_date'),
+                'end_date' => $request->input('end_date'),
+                'user_id' => $request->input('user_id'),
+                'default_currency' => $defaultCurrency->code
+            ]);
+
+            $startDate = $request->input('start_date', now()->subYear()->format('Y-m-d'));
+            $endDate = $request->input('end_date', now()->format('Y-m-d'));
+            $userId = $request->input('user_id');
+
+            // Ensure all necessary relationships are eager loaded
+            $budgetQuery = Budget::with([
+                'user',
+                'category',
+                'currency',
+                'expenses' => function($query) use ($startDate, $endDate) {
+                    $query->whereBetween('date', [$startDate, $endDate])
+                         ->with(['currency', 'category']);
+                }
+            ])->whereBetween('start_date', [$startDate, $endDate]);
+
+            if ($userId) {
+                $budgetQuery->where('user_id', $userId);
+            }
+            
+            // Base budget query
+            $budgetQuery = Budget::with(['user', 'category', 'currency'])
+                ->whereBetween('start_date', [$startDate, $endDate]);
+                
+            if ($userId) {
+                $budgetQuery->where('user_id', $userId);
+            }
+            
+            try {
+                $budgets = $budgetQuery->get();
+                \Log::debug('Retrieved budgets', [
+                    'count' => $budgets->count(),
+                    'budget_ids' => $budgets->pluck('id')
+                ]);
+            } catch (\Exception $e) {
+                \Log::error('Failed to retrieve budgets', [
+                    'error' => $e->getMessage()
+                ]);
+                throw $e;
+            }
+            
+            // Total allocated amounts
+            $totalAllocated = $budgets->sum('amount');
+            $totalBudgets = $budgets->count();
+            $activeBudgets = $budgets->where('end_date', '>=', now())->count();
+            
+            // Fetch budgets and handle any missing currencies
+            $budgets = $budgetQuery->get()->map(function ($budget) use ($defaultCurrency) {
+                if (!$budget->currency_id) {
+                    $budget->currency_id = $defaultCurrency->id;
+                    $budget->save();
+                    \Log::warning("Fixed missing currency for budget {$budget->id}");
+                }
+                return $budget;
+            });
+
+            // Calculate budget utilization with comprehensive currency handling
+            $budgetUtilization = $budgets->map(function ($budget) use ($defaultCurrency) {
+                try {
+                    // Ensure budget has valid currency
+                    if (!$budget->currency) {
+                        \Log::warning("Budget {$budget->id} missing currency, using default");
+                        $budget->currency_id = Currency::getDefaultCurrency()->id;
+                        $budget->save();
+                    }
+
+                    // Calculate utilization safely
+                    $totalBudget = $budget->amount ?? 0;
+                    $totalSpent = 0;
+
+                    // Safely calculate total spent with currency conversion
+                    foreach ($budget->expenses as $expense) {
+                        try {
+                            if (!$expense->currency) {
+                                $expense->currency_id = $budget->currency_id;
+                                $expense->save();
+                            }
+
+                            $amount = $expense->amount;
+                            if ($expense->currency_id !== $budget->currency_id) {
+                                $amount = $budget->convertCurrency(
+                                    $expense->amount,
+                                    $expense->currency ?? Currency::getDefaultCurrency(),
+                                    $budget->currency
+                                );
+                            }
+                            $totalSpent += $amount;
+                        } catch (\Exception $e) {
+                            \Log::warning("Error converting expense amount", [
+                                'expense_id' => $expense->id,
+                                'error' => $e->getMessage()
+                            ]);
+                            // Continue with next expense
+                            continue;
+                        }
+                    }
+
+                    $remaining = $totalBudget - $totalSpent;
+                    $percentage = $totalBudget > 0 ? ($totalSpent / $totalBudget) * 100 : 0;
+
+                    \Log::debug('Calculated budget utilization', [
+                        'budget_id' => $budget->id,
+                        'total_budget' => $totalBudget,
+                        'total_spent' => $totalSpent,
+                        'currency' => $budget->currency->code ?? 'unknown',
+                        'percentage' => $percentage
+                    ]);
+
+                    return [
+                        'budget_id' => $budget->id,
+                        'name' => $budget->name ?? "Budget {$budget->id}",
+                        'allocated_amount' => $totalBudget,
+                        'spent_amount' => $totalSpent,
+                        'remaining_amount' => $remaining,
+                        'utilization_percentage' => round($percentage, 2),
+                        'status' => $percentage > 100 ? 'over_budget' :
+                                  ($percentage > 80 ? 'warning' : 'on_track'),
+                        'user_name' => $budget->user ? $budget->user->name : 'Unknown',
+                        'category_name' => $budget->category ? $budget->category->name : 'General',
+                        'currency_code' => $budget->currency ? $budget->currency->code : Currency::getDefaultCurrency()->code
+                    ];
+                } catch (\Exception $e) {
+                    \Log::error('Failed to process budget', [
+                        'budget_id' => $budget->id,
+                        'error' => $e->getMessage()
+                    ]);
+                    // Return safe default values instead of throwing
+                    return [
+                        'budget_id' => $budget->id,
+                        'name' => "Budget {$budget->id}",
+                        'allocated_amount' => 0,
+                        'spent_amount' => 0,
+                        'remaining_amount' => 0,
+                        'utilization_percentage' => 0,
+                        'status' => 'error',
+                        'user_name' => 'Unknown',
+                        'category_name' => 'General',
+                        'currency_code' => Currency::getDefaultCurrency()->code
+                    ];
+                }
+            });
+            
+            // Budget adherence statistics
+            $onTrackBudgets = $budgetUtilization->where('utilization_percentage', '<=', 80)->count();
+            $warningBudgets = $budgetUtilization->whereBetween('utilization_percentage', [80, 100])->count();
+            $overBudgets = $budgetUtilization->where('utilization_percentage', '>', 100)->count();
+            
+            // Average utilization rates
+            $avgUtilization = $budgetUtilization->avg('utilization_percentage');
+            $totalRemaining = $budgetUtilization->sum('remaining_amount');
+            $totalSpent = $budgetUtilization->sum('spent_amount');
+            
+            // Monthly budget trends
+            $monthlyTrends = [];
+            for ($i = 5; $i >= 0; $i--) {
+                $monthStart = now()->subMonths($i)->startOfMonth();
+                $monthEnd = now()->subMonths($i)->endOfMonth();
+                
+                $monthBudgets = Budget::whereBetween('start_date', [$monthStart, $monthEnd])
+                    ->when($userId, fn($q) => $q->where('user_id', $userId))
+                    ->get();
+                
+                $monthlyTrends[] = [
+                    'month' => $monthStart->format('M Y'),
+                    'budgets_created' => $monthBudgets->count(),
+                    'total_allocated' => $monthBudgets->sum('amount'),
+                    'average_budget_amount' => $monthBudgets->avg('amount') ?? 0
+                ];
+            }
+            
+            // Budget performance by category
+            $categoryPerformance = $budgetUtilization->groupBy('category_name')->map(function ($budgets, $category) {
+                return [
+                    'category' => $category,
+                    'total_budgets' => $budgets->count(),
+                    'total_allocated' => $budgets->sum('allocated_amount'),
+                    'total_spent' => $budgets->sum('spent_amount'),
+                    'avg_utilization' => $budgets->avg('utilization_percentage')
+                ];
+            })->values();
+            
+            return Inertia::render('Admin/BudgetAnalytics', [
+                'overview' => [
+                    'total_budgets' => $totalBudgets,
+                    'active_budgets' => $activeBudgets,
+                    'total_allocated' => $totalAllocated,
+                    'total_spent' => $totalSpent,
+                    'total_remaining' => $totalRemaining,
+                    'average_utilization' => round($avgUtilization, 2)
+                ],
+                'adherence' => [
+                    'on_track' => $onTrackBudgets,
+                    'warning' => $warningBudgets,
+                    'over_budget' => $overBudgets,
+                    'adherence_rate' => $totalBudgets > 0 ? round((($onTrackBudgets + $warningBudgets) / $totalBudgets) * 100, 2) : 0
+                ],
+                'utilization' => $budgetUtilization->values(),
+                'trends' => $monthlyTrends,
+                'category_performance' => $categoryPerformance,
+                'filters' => [
+                    'start_date' => $startDate,
+                    'end_date' => $endDate,
+                    'user_id' => $userId
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            $errorContext = [
+                'error_type' => get_class($e),
+                'message' => $e->getMessage(),
+                'file' => basename($e->getFile()),
+                'line' => $e->getLine()
+            ];
+
+            // Log detailed error information
+            \Log::error('Budget analytics calculation failed', array_merge($errorContext, [
+                'trace' => $e->getTraceAsString(),
+                'currency_state' => [
+                    'default_currency_exists' => Currency::where('is_default', true)->exists(),
+                    'active_currencies' => Currency::where('is_active', true)->count(),
+                ]
+            ]));
+
+            // Determine if error is currency-related
+            $isCurrencyError = str_contains(strtolower($e->getMessage()), 'currency') ||
+                             str_contains($e->getTraceAsString(), 'CurrencyHelper') ||
+                             str_contains($e->getTraceAsString(), 'convertCurrency');
+
+            $errorMessage = $isCurrencyError
+                ? 'Currency configuration issue detected. Please check your currency settings and ensure all transactions have valid currencies.'
+                : 'Failed to fetch budget analytics. Please try again or contact support if the issue persists.';
+
+            return response()->json([
+                'success' => false,
+                'message' => $errorMessage,
+                'error_details' => config('app.debug') ? $errorContext : null,
+                'currency_status' => [
+                    'has_default_currency' => Currency::where('is_default', true)->exists(),
+                    'active_currencies' => Currency::where('is_active', true)->count()
+                ]
+            ], 500);
+        }
+    }
+
+    /**
+     * Goals analytics for admin dashboard.
+     */
+    public function goalsAnalytics(Request $request)
+    {
+        try {
+            $startDate = $request->input('start_date', now()->subYear()->format('Y-m-d'));
+            $endDate = $request->input('end_date', now()->format('Y-m-d'));
+            $userId = $request->input('user_id');
+            
+            // Base goals query
+            $goalsQuery = Goal::with(['user'])
+                ->whereBetween('created_at', [$startDate, $endDate]);
+                
+            if ($userId) {
+                $goalsQuery->where('user_id', $userId);
+            }
+            
+            $goals = $goalsQuery->get();
+            
+            // Basic goal statistics
+            $totalGoals = $goals->count();
+            $activeGoals = $goals->where('status', 'active')->count();
+            $completedGoals = $goals->where('status', 'completed')->count();
+            $pausedGoals = $goals->where('status', 'paused')->count();
+            
+            // Goal completion rate
+            $completionRate = $totalGoals > 0 ? round(($completedGoals / $totalGoals) * 100, 2) : 0;
+            
+            // Target vs actual amounts analysis
+            $totalTargetAmount = $goals->sum('target_amount');
+            $totalCurrentAmount = $goals->sum('current_amount');
+            $totalProgress = $totalGoals > 0 ? $goals->avg('progress') : 0;
+            
+            // Goals by progress ranges
+            $goalsByProgress = [
+                'not_started' => $goals->where('progress', 0)->count(),
+                'in_progress' => $goals->whereBetween('progress', [1, 99])->count(),
+                'completed' => $goals->where('progress', 100)->count(),
+                'overachieved' => $goals->where('progress', '>', 100)->count()
+            ];
+            
+            // Timeline analytics
+            $upcomingDeadlines = $goals->where('status', 'active')
+                ->where('target_date', '>=', now())
+                ->where('target_date', '<=', now()->addMonth())
+                ->count();
+                
+            $overdueGoals = $goals->where('status', 'active')
+                ->where('target_date', '<', now())
+                ->count();
+            
+            // Monthly goal trends
+            $monthlyTrends = [];
+            for ($i = 5; $i >= 0; $i--) {
+                $monthStart = now()->subMonths($i)->startOfMonth();
+                $monthEnd = now()->subMonths($i)->endOfMonth();
+                
+                $monthGoals = Goal::whereBetween('created_at', [$monthStart, $monthEnd])
+                    ->when($userId, fn($q) => $q->where('user_id', $userId))
+                    ->get();
+                
+                $monthCompleted = Goal::where('status', 'completed')
+                    ->whereBetween('updated_at', [$monthStart, $monthEnd])
+                    ->when($userId, fn($q) => $q->where('user_id', $userId))
+                    ->count();
+                
+                $monthlyTrends[] = [
+                    'month' => $monthStart->format('M Y'),
+                    'goals_created' => $monthGoals->count(),
+                    'goals_completed' => $monthCompleted,
+                    'total_target_amount' => $monthGoals->sum('target_amount'),
+                    'average_target_amount' => $monthGoals->avg('target_amount') ?? 0
+                ];
+            }
+            
+            // Goal performance by user (top performers)
+            $userPerformance = $goals->groupBy('user_id')->map(function ($userGoals, $userId) {
+                $user = $userGoals->first()->user;
+                return [
+                    'user_id' => $userId,
+                    'user_name' => $user ? $user->name : 'Unknown',
+                    'total_goals' => $userGoals->count(),
+                    'completed_goals' => $userGoals->where('status', 'completed')->count(),
+                    'completion_rate' => $userGoals->count() > 0 ?
+                        round(($userGoals->where('status', 'completed')->count() / $userGoals->count()) * 100, 2) : 0,
+                    'total_target_amount' => $userGoals->sum('target_amount'),
+                    'total_current_amount' => $userGoals->sum('current_amount'),
+                    'average_progress' => $userGoals->avg('progress')
+                ];
+            })->sortByDesc('completion_rate')->take(10)->values();
+            
+            // Goals by type/category analysis
+            $goalsByType = $goals->groupBy('type')->map(function ($typeGoals, $type) {
+                return [
+                    'type' => $type ?: 'general',
+                    'count' => $typeGoals->count(),
+                    'completed' => $typeGoals->where('status', 'completed')->count(),
+                    'total_target' => $typeGoals->sum('target_amount'),
+                    'total_current' => $typeGoals->sum('current_amount')
+                ];
+            })->values();
+            
+            return Inertia::render('Admin/GoalsAnalytics', [
+                'overview' => [
+                    'total_goals' => $totalGoals,
+                    'active_goals' => $activeGoals,
+                    'completed_goals' => $completedGoals,
+                    'paused_goals' => $pausedGoals,
+                    'completion_rate' => $completionRate,
+                    'upcoming_deadlines' => $upcomingDeadlines,
+                    'overdue_goals' => $overdueGoals
+                ],
+                'financial_summary' => [
+                    'total_target_amount' => $totalTargetAmount,
+                    'total_current_amount' => $totalCurrentAmount,
+                    'average_progress' => round($totalProgress, 2),
+                    'achievement_rate' => $totalTargetAmount > 0 ?
+                        round(($totalCurrentAmount / $totalTargetAmount) * 100, 2) : 0
+                ],
+                'progress_distribution' => $goalsByProgress,
+                'trends' => $monthlyTrends,
+                'user_performance' => $userPerformance,
+                'goals_by_type' => $goalsByType,
+                'filters' => [
+                    'start_date' => $startDate,
+                    'end_date' => $endDate,
+                    'user_id' => $userId
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch goals analytics: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Debt analytics for admin dashboard.
+     */
+    public function debtAnalytics(Request $request)
+    {
+        try {
+            $userId = $request->input('user_id');
+            
+            // Base debt query
+            $debtQuery = Creditor::with(['user']);
+                
+            if ($userId) {
+                $debtQuery->where('user_id', $userId);
+            }
+            
+            $debts = $debtQuery->get();
+            $activeDebts = $debts->where('status', 'active');
+            
+            // Total debt amounts
+            $totalDebtAmount = $activeDebts->sum('amount_owed');
+            $totalMinimumPayments = $activeDebts->sum('minimum_payment');
+            $totalDebts = $activeDebts->count();
+            
+            // Payment schedule analysis
+            $upcomingPayments = $activeDebts->where('due_date', '>=', now())
+                ->where('due_date', '<=', now()->addMonth())
+                ->sum('minimum_payment');
+                
+            $overdueDebts = $activeDebts->where('due_date', '<', now())->count();
+            $overdueAmount = $activeDebts->where('due_date', '<', now())->sum('amount_owed');
+            
+            // Interest calculations
+            $monthlyInterest = $activeDebts->sum(function ($debt) {
+                return ($debt->amount_owed * ($debt->interest_rate / 100)) / 12;
+            });
+            
+            $totalAnnualInterest = $activeDebts->sum(function ($debt) {
+                return $debt->amount_owed * ($debt->interest_rate / 100);
+            });
+            
+            // Debt by interest rate ranges
+            $debtByInterestRates = [
+                'low' => $activeDebts->where('interest_rate', '<=', 5)->count(),
+                'medium' => $activeDebts->whereBetween('interest_rate', [5.01, 15])->count(),
+                'high' => $activeDebts->where('interest_rate', '>', 15)->count()
+            ];
+            
+            // Debt reduction progress (compare with historical data if available)
+            $lastMonthDebts = Creditor::where('updated_at', '<=', now()->subMonth())
+                ->when($userId, fn($q) => $q->where('user_id', $userId))
+                ->sum('amount_owed');
+            
+            $debtReduction = $lastMonthDebts > 0 ? $lastMonthDebts - $totalDebtAmount : 0;
+            $reductionPercentage = $lastMonthDebts > 0 ?
+                round(($debtReduction / $lastMonthDebts) * 100, 2) : 0;
+            
+            // Monthly debt trends
+            $monthlyTrends = [];
+            for ($i = 5; $i >= 0; $i--) {
+                $monthStart = now()->subMonths($i)->startOfMonth();
+                $monthEnd = now()->subMonths($i)->endOfMonth();
+                
+                // This is simplified - in a real scenario, you'd track historical debt amounts
+                $monthDebts = Creditor::whereBetween('created_at', [$monthStart, $monthEnd])
+                    ->when($userId, fn($q) => $q->where('user_id', $userId))
+                    ->get();
+                
+                $monthlyTrends[] = [
+                    'month' => $monthStart->format('M Y'),
+                    'new_debts' => $monthDebts->count(),
+                    'total_new_amount' => $monthDebts->sum('amount_owed'),
+                    'average_interest_rate' => $monthDebts->avg('interest_rate') ?? 0
+                ];
+            }
+            
+            // Debt-to-income analysis (simplified)
+            $userIncomes = collect();
+            if ($userId) {
+                $userIncomes = \App\Models\Earning::where('user_id', $userId)
+                    ->where('date', '>=', now()->subYear())
+                    ->get();
+            } else {
+                $userIncomes = \App\Models\Earning::where('date', '>=', now()->subYear())->get();
+            }
+            
+            $monthlyIncome = $userIncomes->where('date', '>=', now()->startOfMonth())->sum('amount');
+            $debtToIncomeRatio = $monthlyIncome > 0 ?
+                round(($totalMinimumPayments / $monthlyIncome) * 100, 2) : 0;
+            
+            // Debt by payment frequency
+            $paymentFrequencyDistribution = $activeDebts->groupBy('payment_frequency')
+                ->map(function ($debts, $frequency) {
+                    return [
+                        'frequency' => $frequency ?: 'monthly',
+                        'count' => $debts->count(),
+                        'total_amount' => $debts->sum('amount_owed'),
+                        'total_payments' => $debts->sum('minimum_payment')
+                    ];
+                })->values();
+            
+            // Top debtors (by amount)
+            $topDebtors = $activeDebts->groupBy('user_id')->map(function ($userDebts, $userId) {
+                $user = $userDebts->first()->user;
+                return [
+                    'user_id' => $userId,
+                    'user_name' => $user ? $user->name : 'Unknown',
+                    'total_debt' => $userDebts->sum('amount_owed'),
+                    'debt_count' => $userDebts->count(),
+                    'total_minimum_payment' => $userDebts->sum('minimum_payment'),
+                    'highest_interest_rate' => $userDebts->max('interest_rate')
+                ];
+            })->sortByDesc('total_debt')->take(10)->values();
+            
+            return Inertia::render('Admin/DebtAnalytics', [
+                'overview' => [
+                    'total_debts' => $totalDebts,
+                    'total_debt_amount' => $totalDebtAmount,
+                    'total_minimum_payments' => $totalMinimumPayments,
+                    'upcoming_payments' => $upcomingPayments,
+                    'overdue_debts' => $overdueDebts,
+                    'overdue_amount' => $overdueAmount
+                ],
+                'interest_analysis' => [
+                    'monthly_interest' => round($monthlyInterest, 2),
+                    'annual_interest' => round($totalAnnualInterest, 2),
+                    'debt_by_rates' => $debtByInterestRates
+                ],
+                'reduction_progress' => [
+                    'debt_reduction' => $debtReduction,
+                    'reduction_percentage' => $reductionPercentage,
+                    'trend' => $reductionPercentage > 0 ? 'improving' : 'worsening'
+                ],
+                'debt_to_income' => [
+                    'ratio' => $debtToIncomeRatio,
+                    'monthly_income' => $monthlyIncome,
+                    'status' => $debtToIncomeRatio <= 36 ? 'healthy' :
+                               ($debtToIncomeRatio <= 50 ? 'concerning' : 'critical')
+                ],
+                'trends' => $monthlyTrends,
+                'payment_frequency' => $paymentFrequencyDistribution,
+                'top_debtors' => $topDebtors,
+                'filters' => [
+                    'user_id' => $userId
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch debt analytics: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Investment analytics for admin dashboard.
+     */
+    public function investmentAnalytics(Request $request)
+    {
+        try {
+            $startDate = $request->input('start_date', now()->subYear()->format('Y-m-d'));
+            $endDate = $request->input('end_date', now()->format('Y-m-d'));
+            $userId = $request->input('user_id');
+            
+            // Base investment query
+            $investmentQuery = Investment::with(['user', 'category', 'performanceLogs'])
+                ->whereBetween('created_at', [$startDate, $endDate]);
+                
+            if ($userId) {
+                $investmentQuery->where('user_id', $userId);
+            }
+            
+            $investments = $investmentQuery->get();
+            
+            // Total investment values
+            $totalInvestments = $investments->count();
+            $totalInvestedAmount = $investments->sum('initial_amount');
+            $totalCurrentValue = $investments->sum('current_amount');
+            $totalReturn = $totalCurrentValue - $totalInvestedAmount;
+            $totalReturnPercentage = $totalInvestedAmount > 0 ?
+                round(($totalReturn / $totalInvestedAmount) * 100, 2) : 0;
+            
+            // Asset allocation breakdown
+            $assetAllocation = $investments->groupBy('category.name')->map(function ($categoryInvestments, $category) {
+                $categoryValue = $categoryInvestments->sum('current_amount');
+                return [
+                    'category' => $category ?: 'Uncategorized',
+                    'count' => $categoryInvestments->count(),
+                    'total_value' => $categoryValue,
+                    'total_invested' => $categoryInvestments->sum('initial_amount'),
+                    'return_amount' => $categoryValue - $categoryInvestments->sum('initial_amount')
+                ];
+            })->values();
+            
+            // Performance metrics
+            $performingInvestments = $investments->filter(function ($investment) {
+                return $investment->current_amount > $investment->initial_amount;
+            });
+            
+            $underperformingInvestments = $investments->filter(function ($investment) {
+                return $investment->current_amount < $investment->initial_amount;
+            });
+            
+            // Investment status distribution
+            // Calculate total investments first
+            $totalInvestments = $investments->count();
+
+            $statusDistribution = $investments->groupBy('status')->map(function ($statusInvestments, $status) use ($totalInvestments) {
+                return [
+                    'status' => $status,
+                    'count' => $statusInvestments->count(),
+                    'total_value' => $statusInvestments->sum('current_amount'),
+                    'percentage' => $totalInvestments > 0 ?
+                        round(($statusInvestments->count() / $totalInvestments) * 100, 2) : 0
+                ];
+            })->values();
+            
+            // Monthly investment trends
+            $monthlyTrends = [];
+            for ($i = 5; $i >= 0; $i--) {
+                $monthStart = now()->subMonths($i)->startOfMonth();
+                $monthEnd = now()->subMonths($i)->endOfMonth();
+                
+                $monthInvestments = Investment::whereBetween('created_at', [$monthStart, $monthEnd])
+                    ->when($userId, fn($q) => $q->where('user_id', $userId))
+                    ->get();
+                
+                $monthlyTrends[] = [
+                    'month' => $monthStart->format('M Y'),
+                    'new_investments' => $monthInvestments->count(),
+                    'total_invested' => $monthInvestments->sum('initial_amount'),
+                    'average_investment' => $monthInvestments->avg('initial_amount') ?? 0
+                ];
+            }
+            
+            // Portfolio risk assessment (simplified)
+            $highRiskInvestments = $investments->whereIn('category.name', ['Cryptocurrency', 'Options', 'Futures'])->count();
+            $mediumRiskInvestments = $investments->whereIn('category.name', ['Stocks', 'ETFs', 'Mutual Funds'])->count();
+            $lowRiskInvestments = $investments->whereIn('category.name', ['Bonds', 'Savings', 'CDs'])->count();
+            
+            $riskDistribution = [
+                'high_risk' => ['count' => $highRiskInvestments, 'percentage' => $totalInvestments > 0 ? round(($highRiskInvestments / $totalInvestments) * 100, 2) : 0],
+                'medium_risk' => ['count' => $mediumRiskInvestments, 'percentage' => $totalInvestments > 0 ? round(($mediumRiskInvestments / $totalInvestments) * 100, 2) : 0],
+                'low_risk' => ['count' => $lowRiskInvestments, 'percentage' => $totalInvestments > 0 ? round(($lowRiskInvestments / $totalInvestments) * 100, 2) : 0]
+            ];
+            
+            // Top performing investments
+            $topPerformers = $investments->sortByDesc(function ($investment) {
+                return $investment->current_amount - $investment->initial_amount;
+            })->take(10)->map(function ($investment) {
+                $return = $investment->current_amount - $investment->initial_amount;
+                $returnPercentage = $investment->initial_amount > 0 ?
+                    round(($return / $investment->initial_amount) * 100, 2) : 0;
+                
+                return [
+                    'investment_id' => $investment->id,
+                    'name' => $investment->name,
+                    'symbol' => $investment->symbol,
+                    'category' => $investment->category ? $investment->category->name : 'Uncategorized',
+                    'initial_amount' => $investment->initial_amount,
+                    'current_value' => $investment->current_amount,
+                    'return_amount' => $return,
+                    'return_percentage' => $returnPercentage,
+                    'user_name' => $investment->user ? $investment->user->name : 'Unknown'
+                ];
+            })->values();
+            
+            // Diversification analysis
+            $uniqueCategories = $investments->pluck('category.name')->unique()->count();
+            $diversificationScore = $totalInvestments > 0 ?
+                min(round(($uniqueCategories / max($totalInvestments, 1)) * 100, 2), 100) : 0;
+            
+            return Inertia::render('Admin/InvestmentAnalytics', [
+                'overview' => [
+                    'total_investments' => $totalInvestments,
+                    'total_invested_amount' => $totalInvestedAmount,
+                    'total_current_value' => $totalCurrentValue,
+                    'total_return' => $totalReturn,
+                    'total_return_percentage' => $totalReturnPercentage,
+                    'performing_investments' => $performingInvestments->count(),
+                    'underperforming_investments' => $underperformingInvestments->count()
+                ],
+                'asset_allocation' => $assetAllocation,
+                'status_distribution' => $statusDistribution,
+                'risk_assessment' => $riskDistribution,
+                'diversification' => [
+                    'unique_categories' => $uniqueCategories,
+                    'diversification_score' => $diversificationScore,
+                    'recommendation' => $uniqueCategories < 3 ? 'Consider diversifying into more asset categories' : 'Good diversification'
+                ],
+                'performance' => [
+                    'top_performers' => $topPerformers,
+                    'avg_return_percentage' => $investments->avg(function ($investment) {
+                        return $investment->initial_amount > 0 ?
+                            (($investment->current_amount - $investment->initial_amount) / $investment->initial_amount) * 100 : 0;
+                    })
+                ],
+                'trends' => $monthlyTrends,
+                'filters' => [
+                    'start_date' => $startDate,
+                    'end_date' => $endDate,
+                    'user_id' => $userId
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch investment analytics: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Unified analytics dashboard.
+     */
+    public function unifiedAnalytics(Request $request)
+    {
+        try {
+            // Validate currency configuration before proceeding
+            $defaultCurrency = $this->validateCurrencyConfiguration();
+
+            // Get active tab from request, default to 'overview'
+            $activeTab = $request->input('tab', 'overview');
+
+            \Log::info('Loading unified analytics dashboard', [
+                'active_tab' => $activeTab,
+                'default_currency' => $defaultCurrency->code
+            ]);
+            
+            // Basic overview data - always loaded
+            $overview = $this->getAnalyticsOverview($request);
+            
+            return Inertia::render('Admin/UnifiedAnalytics', [
+                'overview' => $overview,
+                'activeTab' => $activeTab,
+                'filters' => [
+                    'start_date' => $request->input('start_date', now()->subYear()->format('Y-m-d')),
+                    'end_date' => $request->input('end_date', now()->format('Y-m-d')),
+                    'user_id' => $request->input('user_id'),
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load unified analytics: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Validate currency configuration and ensure consistency
+     * @throws \Exception if currency configuration is invalid
+     */
+    /**
+     * Get analytics overview data for unified dashboard.
+     */
+    private function getAnalyticsOverview(Request $request)
+    {
+        try {
+            // Validate currency configuration before calculations
+            $defaultCurrency = $this->validateCurrencyConfiguration();
+            
+            $startDate = $request->input('start_date', now()->subYear()->format('Y-m-d'));
+            $endDate = $request->input('end_date', now()->format('Y-m-d'));
+            $userId = $request->input('user_id');
+
+            \Log::debug('Calculating analytics overview', [
+                'date_range' => "$startDate to $endDate",
+                'user_id' => $userId,
+                'default_currency' => $defaultCurrency->code
+            ]);
+
+            // Basic system overview
+            $totalUsers = User::count();
+            $totalTransactions = Expense::count() + Earning::count();
+            $totalBudgets = Budget::count();
+            $totalGoals = Goal::count();
+            $totalInvestments = Investment::count();
+            $totalDebts = Creditor::where('status', 'active')->count();
+// Ensure amounts are converted to default currency and handle missing currencies
+try {
+    $totalExpenseAmount = $this->getConvertedExpenseAmount($defaultCurrency);
+    $totalEarningAmount = $this->getConvertedEarningAmount($defaultCurrency);
+} catch (\Exception $e) {
+    \Log::error('Error converting amounts', [
+        'error' => $e->getMessage(),
+        'trace' => $e->getTraceAsString()
+    ]);
+    $totalExpenseAmount = 0;
+    $totalEarningAmount = 0;
+}
+
+// Recent activity (last 30 days)
+$thirtyDaysAgo = now()->subDays(30);
+$recentActivity = [
+    'new_users' => User::where('created_at', '>=', $thirtyDaysAgo)->count(),
+    'new_transactions' => Expense::where('date', '>=', $thirtyDaysAgo)->count() +
+                        Earning::where('date', '>=', $thirtyDaysAgo)->count(),
+    'new_budgets' => Budget::where('created_at', '>=', $thirtyDaysAgo)->count(),
+    'new_goals' => Goal::where('created_at', '>=', $thirtyDaysAgo)->count(),
+];        // Financial summary with currency validation
+        $activeCurrencies = Currency::where('is_active', true)->count();
+
+        /**
+         * Get converted expense amount in default currency
+         */
+        private function getConvertedExpenseAmount($defaultCurrency)
+        {
+            return Expense::with('currency')
+->get()
+->sum(function ($expense) use ($defaultCurrency) {
+    if (!$expense->currency) {
+        $expense->currency_id = $defaultCurrency->id;
+        $expense->save();
+    }
+    return $expense->currency_id === $defaultCurrency->id
+        ? $expense->amount
+        : $expense->currency->convertTo($expense->amount, $defaultCurrency);
+});
+}
+
+/**
+* Get converted earning amount in default currency
+*/
+private function getConvertedEarningAmount($defaultCurrency)
+{
+return Earning::with('currency')
+->get()
+->sum(function ($earning) use ($defaultCurrency) {
+    if (!$earning->currency) {
+        $earning->currency_id = $defaultCurrency->id;
+        $earning->save();
+    }
+    return $earning->currency_id === $defaultCurrency->id
+        ? $earning->amount
+        : $earning->currency->convertTo($earning->amount, $defaultCurrency);
+});
+}
+
+/**
+* Get converted investment amount in default currency
+*/
+private function getConvertedInvestmentAmount($defaultCurrency)
+{
+return Investment::with('currency')
+->get()
+->sum(function ($investment) use ($defaultCurrency) {
+    if (!$investment->currency) {
+        $investment->currency_id = $defaultCurrency->id;
+        $investment->save();
+    }
+    return $investment->currency_id === $defaultCurrency->id
+        ? $investment->current_amount
+        : $investment->currency->convertTo($investment->current_amount, $defaultCurrency);
+});
+}
+
+/**
+* Get converted debt amount in default currency
+*/
+private function getConvertedDebtAmount($defaultCurrency)
+{
+return Creditor::where('status', 'active')
+->with('currency')
+->get()
+->sum(function ($debt) use ($defaultCurrency) {
+    if (!$debt->currency) {
+        $debt->currency_id = $defaultCurrency->id;
+        $debt->save();
+    }
+    return $debt->currency_id === $defaultCurrency->id
+        ? $debt->amount_owed
+        : $debt->currency->convertTo($debt->amount_owed, $defaultCurrency);
+});
+}
+
+/**
+* Validate currency configuration and ensure consistency
+* @throws \Exception if currency configuration is invalid
+*/
+private function validateCurrencyConfiguration()
+{
+// Check if default currency exists and is active
+$defaultCurrency = Currency::getDefaultCurrency();
+if (!$defaultCurrency) {
+throw new \Exception('System configuration error: No default currency set');
+}
+
+if (!$defaultCurrency->is_active) {
+throw new \Exception('System configuration error: Default currency is inactive');
+}
+
+// Check for active currencies
+$activeCurrencies = Currency::where('is_active', true)->count();
+if ($activeCurrencies === 0) {
+throw new \Exception('No active currencies found in the system');
+}
+
+// Log currency configuration state
+\Log::debug('Currency configuration validated', [
+'default_currency' => $defaultCurrency->code,
+'active_currencies' => $activeCurrencies
+]);
+
+return $defaultCurrency;
+}
+
+/**
+* Get analytics overview data for unified dashboard
+*/
+private function getAnalyticsOverview(Request $request)
+{
+try {
+// Validate currency configuration before calculations
+$defaultCurrency = $this->validateCurrencyConfiguration();
+
+$startDate = $request->input('start_date', now()->subYear()->format('Y-m-d'));
+$endDate = $request->input('end_date', now()->format('Y-m-d'));
+$userId = $request->input('user_id');
+
+\Log::debug('Calculating analytics overview', [
+    'date_range' => "$startDate to $endDate",
+    'user_id' => $userId,
+    'default_currency' => $defaultCurrency->code
+]);
+
+// Basic system overview
+$totalUsers = User::count();
+$totalTransactions = Expense::count() + Earning::count();
+$totalBudgets = Budget::count();
+$totalGoals = Goal::count();
+$totalInvestments = Investment::count();
+$totalDebts = Creditor::where('status', 'active')->count();
+
+// Ensure amounts are converted to default currency
+try {
+    $totalExpenseAmount = $this->getConvertedExpenseAmount($defaultCurrency);
+    $totalEarningAmount = $this->getConvertedEarningAmount($defaultCurrency);
+} catch (\Exception $e) {
+    \Log::error('Error converting amounts', [
+        'error' => $e->getMessage(),
+        'trace' => $e->getTraceAsString()
+    ]);
+    $totalExpenseAmount = 0;
+    $totalEarningAmount = 0;
+}
+
+$thirtyDaysAgo = now()->subDays(30);
+$recentActivity = [
+    'new_users' => User::where('created_at', '>=', $thirtyDaysAgo)->count(),
+    'new_transactions' => Expense::where('date', '>=', $thirtyDaysAgo)->count() +
+                        Earning::where('date', '>=', $thirtyDaysAgo)->count(),
+    'new_budgets' => Budget::where('created_at', '>=', $thirtyDaysAgo)->count(),
+    'new_goals' => Goal::where('created_at', '>=', $thirtyDaysAgo)->count(),
+];
+
+$activeCurrencies = Currency::where('is_active', true)->count();
+
+try {
+    // Get converted investment and debt totals
+    $totalInvestmentValue = $this->getConvertedInvestmentAmount($defaultCurrency);
+    $totalDebtAmount = $this->getConvertedDebtAmount($defaultCurrency);
+} catch (\Exception $e) {
+    \Log::error('Error calculating investment/debt totals', [
+        'error' => $e->getMessage()
+    ]);
+    $totalInvestmentValue = 0;
+    $totalDebtAmount = 0;
+}
+
+return [
+    'system_overview' => [
+        'total_users' => $totalUsers,
+        'total_transactions' => $totalTransactions,
+        'total_budgets' => $totalBudgets,
+        'total_goals' => $totalGoals,
+        'total_investments' => $totalInvestments,
+        'total_debts' => $totalDebts,
+    ],
+    'recent_activity' => $recentActivity,
+    'financial_summary' => [
+        'total_expenses' => $totalExpenseAmount,
+        'total_earnings' => $totalEarningAmount,
+        'total_investment_value' => $totalInvestmentValue,
+        'total_debt_amount' => $totalDebtAmount,
+        'net_worth' => $totalEarningAmount - $totalExpenseAmount + $totalInvestmentValue - $totalDebtAmount,
+    ],
+    'currency_info' => [
+        'default_currency' => $defaultCurrency->code,
+        'active_currencies' => $activeCurrencies
+    ]
+];
+} catch (\Exception $e) {
+\Log::error('Failed to generate analytics overview', [
+    'error' => $e->getMessage(),
+    'trace' => $e->getTraceAsString()
+]);
+throw $e;
+}
+}
+
+            return [
+                'system_overview' => [
+                    'total_users' => $totalUsers,
+                    'total_transactions' => $totalTransactions,
+                    'total_budgets' => $totalBudgets,
+                    'total_goals' => $totalGoals,
+                    'total_investments' => $totalInvestments,
+                    'total_debts' => $totalDebts,
+                ],
+                'recent_activity' => $recentActivity,
+                'financial_summary' => [
+                    'total_expenses' => $totalExpenseAmount,
+                    'total_earnings' => $totalEarningAmount,
+                    'total_investment_value' => $totalInvestmentValue,
+                    'total_debt_amount' => $totalDebtAmount,
+                    'net_worth' => $totalEarningAmount - $totalExpenseAmount + $totalInvestmentValue - $totalDebtAmount,
+                ],
+                'currency_info' => [
+                    'default_currency' => $defaultCurrency->code,
+                    'active_currencies' => $activeCurrencies
+                ]
+            ];
+        } catch (\Exception $e) {
+            \Log::error('Failed to generate analytics overview', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            throw $e;
+        }
+    }
+
+    /**
+     * Validate currency configuration and ensure consistency.
+     * @throws \Exception if currency configuration is invalid
+     */
+    private function validateCurrencyConfiguration()
+    {
+        // Check if default currency exists and is active
+        $defaultCurrency = Currency::getDefaultCurrency();
+        if (!$defaultCurrency) {
+            throw new \Exception('System configuration error: No default currency set');
+        }
+
+        if (!$defaultCurrency->is_active) {
+            throw new \Exception('System configuration error: Default currency is inactive');
+        }
+
+        // Check for active currencies
+        $activeCurrencies = Currency::where('is_active', true)->count();
+        if ($activeCurrencies === 0) {
+            throw new \Exception('No active currencies found in the system');
+        }
+
+        // Log currency configuration state
+        \Log::debug('Currency configuration validated', [
+            'default_currency' => $defaultCurrency->code,
+            'active_currencies' => $activeCurrencies
+        ]);
+
+        return $defaultCurrency;
+    }
+    }
+
+    /**
+     * API endpoint for unified analytics data based on active tab.
+     */
+    public function getUnifiedAnalyticsData(Request $request)
+    {
+        try {
+            // First ensure we have valid currency configuration
+            $defaultCurrency = Currency::getDefaultCurrency();
+            if (!$defaultCurrency) {
+                throw new \Exception('System configuration error: No default currency set');
+            }
+
+            // Log the start of analytics request
+            \Log::info('Starting unified analytics request', [
+                'module' => $request->input('module'),
+                'start_date' => $request->input('start_date'),
+                'end_date' => $request->input('end_date'),
+                'user_id' => $request->input('user_id'),
+                'default_currency' => $defaultCurrency->code
+            ]);
+
+            // Initialize analytics request
+            $module = $request->input('module', 'budget');
+            $startDate = $request->input('start_date', now()->subYear()->format('Y-m-d'));
+            $endDate = $request->input('end_date', now()->format('Y-m-d'));
+            $userId = $request->input('user_id');
+
+            // Create analytics request with additional currency context
+            $moduleRequest = new Request([
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+                'user_id' => $userId,
+                'default_currency_id' => $defaultCurrency->id,
+            ]);
+
+            // Initialize data container and validate active currencies
+            $data = [];
+            $activeCurrencies = Currency::where('is_active', true)->count();
+            if ($activeCurrencies === 0) {
+                throw new \Exception('No active currencies found in the system');
+            }
+
+            // Add currency context to log
+            \Log::debug('Currency context', [
+                'default_currency' => $defaultCurrency->code,
+                'active_currencies' => $activeCurrencies
+            ]);
+
+            switch ($module) {
+                case 'budget':
+                    $response = $this->budgetAnalytics($moduleRequest);
+                    \Log::debug('Budget analytics response generated');
+                    if ($response instanceof \Inertia\Response) {
+                        $data = $response->toResponse($moduleRequest)->getOriginalContent()['props'];
+                        \Log::debug('Budget analytics data extracted successfully');
+                    } else {
+                        throw new \Exception('Invalid response type from budget analytics');
+                    }
+                    break;
+
+                case 'categories':
+                    $response = $this->categoriesAnalytics($moduleRequest);
+                    if ($response instanceof \Inertia\Response) {
+                        $data = $response->toResponse($moduleRequest)->getOriginalContent()['props'];
+                    }
+                    break;
+
+                case 'goals':
+                    $response = $this->goalsAnalytics($moduleRequest);
+                    if ($response instanceof \Inertia\Response) {
+                        $data = $response->toResponse($moduleRequest)->getOriginalContent()['props'];
+                    }
+                    break;
+
+                case 'debt':
+                    $response = $this->debtAnalytics($moduleRequest);
+                    if ($response instanceof \Inertia\Response) {
+                        $data = $response->toResponse($moduleRequest)->getOriginalContent()['props'];
+                    }
+                    break;
+
+                case 'investment':
+                    $response = $this->investmentAnalytics($moduleRequest);
+                    if ($response instanceof \Inertia\Response) {
+                        $data = $response->toResponse($moduleRequest)->getOriginalContent()['props'];
+                    }
+                    break;
+
+                default:
+                    throw new \Exception('Invalid module specified');
+            }
+
+            \Log::info('Analytics data prepared successfully', [
+                'module' => $module,
+                'data_keys' => array_keys($data)
+            ]);
+
+            // Add currency info to response
+            return response()->json([
+                'success' => true,
+                'data' => $data,
+                'module' => $module,
+                'currency_info' => [
+                    'default_currency' => Currency::getDefaultCurrency()->code,
+                    'active_currencies' => Currency::where('is_active', true)->count()
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Analytics data fetch failed', [
+                'module' => $module ?? 'unknown',
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'request_data' => $request->all()
+            ]);
+
+            // Return a more detailed error response for debugging
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch analytics data. Please check your currency settings and try again.',
+                'error' => config('app.debug') ? [
+                    'message' => $e->getMessage(),
+                    'type' => get_class($e),
+                    'line' => $e->getLine(),
+                    'file' => basename($e->getFile())
+                ] : null,
+                'debug_info' => config('app.debug') ? [
+                    'has_default_currency' => Currency::where('is_default', true)->exists(),
+                    'active_currencies' => Currency::count()
+                ] : null
+            ], 500);
+        }
+    }
+}

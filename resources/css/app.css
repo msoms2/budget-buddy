@@ -1,0 +1,301 @@
+/* Import react-image-crop styles */
+@import 'react-image-crop/dist/ReactCrop.css';
+
+@tailwind base;
+
+@custom-variant dark (&:is(.dark *));
+@tailwind components;
+@tailwind utilities;
+
+/* Hide scrollbars while maintaining functionality */
+::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
+}
+
+/* Firefox scrollbar */
+* {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+/* Base HTML/Body styles */
+html {
+    overflow-y: scroll !important;
+    scrollbar-gutter: stable !important;
+}
+
+html.dialog-open,
+html.dialog-open body {
+    overflow: hidden !important;
+    padding-right: var(--scrollbar-width, 0px) !important;
+}
+
+body {
+    width: 100vw;
+    overflow-x: hidden;
+    max-width: 100%;
+    position: relative;
+}
+
+/* Fix for modals and popups */
+.dialog-backdrop {
+    width: 100vw !important;
+    height: 100vh !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(2px);
+}
+
+/* Handle all scrollable containers */
+body, div, pre, code, textarea, .overflow-auto, .overflow-y-auto, .overflow-x-auto {
+    scrollbar-gutter: stable;
+    overflow-anchor: none;
+}
+
+/* Optional: Make scrollbar fade in when hovering scrollable area */
+.overflow-auto:not(:hover)::-webkit-scrollbar-thumb,
+.overflow-y-auto:not(:hover)::-webkit-scrollbar-thumb,
+.overflow-x-auto:not(:hover)::-webkit-scrollbar-thumb {
+    background-color: rgba(136, 136, 136, 0.2);
+}
+
+/* DaisyUI theme variables to custom CSS variables mapping for compatibility */
+@layer base {
+  :root,
+  [data-theme="light"] {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 3.9%;
+    --primary: 277 24% 45%;
+    --primary-foreground: 273 3.4% 93%;
+    --secondary: 354 24.1% 65%;
+    --secondary-foreground: 342 2.8% 94%;
+    --muted: 0 0% 96.1%;
+    --muted-foreground: 0 0% 45.1%;
+    --accent: 182 15.2% 77%;
+    --accent-foreground: 188 6.3% 38%;
+    --destructive: 13 19.4% 71%;
+    --destructive-foreground: 12 10.5% 27%;
+    --border: 0 0% 89.8%;
+    --input: 0 0% 89.8%;
+    --ring: 0 0% 3.9%;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --radius: 0.5rem;
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 277 24% 45%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+  
+  .dark,
+  [data-theme="dark"] {
+    --background: 252 1.6% 25.33%;
+    --foreground: 257 2.9% 97.8%;
+    --card: 253 1.4% 23.26%;
+    --card-foreground: 257 2.9% 97.8%;
+    --popover: 0 0% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 277 23.3% 58%;
+    --primary-foreground: 272 1.8% 96%;
+    --secondary: 354 24.1% 65%;
+    --secondary-foreground: 342 2.8% 94%;
+    --muted: 254 1.2% 21.15%;
+    --muted-foreground: 0 0% 63.9%;
+    --accent: 182 15.2% 77%;
+    --accent-foreground: 188 6.3% 38%;
+    --destructive: 13 19.4% 71%;
+    --destructive-foreground: 12 10.5% 27%;
+    --border: 254 1.2% 21.15%;
+    --input: 254 1.2% 21.15%;
+    --ring: 0 0% 83.1%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 277 23.3% 58%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+/* Sidebar common variables */
+:root,
+[data-theme="light"] {
+    --sidebar: hsl(0 0% 98%);
+    --sidebar-foreground: hsl(240 5.3% 26.1%);
+    --sidebar-primary: hsl(277 24% 45%);
+    --sidebar-primary-foreground: hsl(0 0% 98%);
+    --sidebar-accent: hsl(240 4.8% 95.9%);
+    --sidebar-accent-foreground: hsl(240 5.9% 10%);
+    --sidebar-border: hsl(220 13% 91%);
+    --sidebar-ring: hsl(217.2 91.2% 59.8%);
+}
+
+.dark,
+[data-theme="dark"] {
+    --sidebar: hsl(240 5.9% 10%);
+    --sidebar-foreground: hsl(240 4.8% 95.9%);
+    --sidebar-primary: hsl(277 23.3% 58%);
+    --sidebar-primary-foreground: hsl(0 0% 100%);
+    --sidebar-accent: hsl(240 3.7% 15.9%);
+    --sidebar-accent-foreground: hsl(240 4.8% 95.9%);
+    --sidebar-border: hsl(240 3.7% 15.9%);
+    --sidebar-ring: hsl(217.2 91.2% 59.8%);
+}
+
+@theme inline {
+    --color-sidebar: var(--sidebar);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Sidebar specific styles */
+.group[data-collapsible="icon"] .sidebar-title {
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+    white-space: nowrap;
+}
+
+.group[data-state="expanded"] .sidebar-title {
+    opacity: 1;
+}
+
+/* Make sure icons remain visible in collapsed state */
+.group[data-collapsible="icon"] [data-sidebar="menu-button"] svg {
+    margin-right: 0;
+}
+
+.group[data-state="expanded"] [data-sidebar="menu-button"] svg {
+    margin-right: 0.5rem;
+}
+
+/* Ensure footer content is properly shown/hidden */
+.group[data-collapsible="icon"] [data-sidebar="footer"] > div > div:last-child {
+    display: none;
+}
+
+/* Ensure user avatar remains visible in collapsed state */
+.group[data-collapsible="icon"] [data-sidebar="footer"] .flex-shrink-0 {
+    margin: 0 auto;
+}
+
+/* Enhance sidebar rail for better click target */
+[data-slot="sidebar-rail"] {
+    cursor: col-resize;
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+}
+
+[data-slot="sidebar-rail"]:hover {
+    opacity: 1;
+}
+
+/* Transaction table styles for dynamic sizing */
+.transaction-table-container {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.transaction-table {
+  width: 100%;
+  table-layout: fixed;
+}
+
+.transaction-row {
+  transition: all 0.2s ease-in-out;
+}
+
+@media (max-width: 768px) {
+  .transaction-row td {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+}
+
+/* Add style for pagination text that adjusts with zoom */
+.pagination-info {
+  font-size: 0.875rem;
+  color: #6b7280;
+  white-space: nowrap;
+}
+
+/* Custom styles for react-image-crop to match our theme */
+.ReactCrop {
+  position: relative;
+  display: inline-block;
+  cursor: crosshair;
+  max-width: 100%;
+  background-color: transparent;
+}
+
+.ReactCrop__crop-selection {
+  border: 2px solid hsl(var(--primary));
+  background-color: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(1px);
+}
+
+.ReactCrop__drag-handle {
+  background-color: hsl(var(--primary));
+  border: 1px solid hsl(var(--primary-foreground));
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+}
+
+.ReactCrop__drag-handle:after {
+  display: none;
+}
+
+.dark .ReactCrop__crop-selection {
+  border-color: hsl(var(--primary));
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+.dark .ReactCrop__drag-handle {
+  background-color: hsl(var(--primary));
+  border-color: hsl(var(--primary-foreground));
+}
+
+/* Make the crop area more visible in dark mode */
+.dark .ReactCrop__crop-selection {
+  box-shadow: 0 0 0 9999em rgba(0, 0, 0, 0.5);
+}
+
+.ReactCrop__crop-selection {
+  box-shadow: 0 0 0 9999em rgba(255, 255, 255, 0.3);
+}
