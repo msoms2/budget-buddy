@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, CheckCircle, ExternalLink, RefreshCw } from 'lucide-react';
-import { detectExtensionConflicts } from '@/utils/extensionDetection';
+import { detectExtensionConflicts } from '@/Utils/extensionDetection';
 
 export default function ExtensionCompatibility() {
   const [conflicts, setConflicts] = useState([]);
