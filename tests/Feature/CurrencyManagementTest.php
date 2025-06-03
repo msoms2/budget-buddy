@@ -200,7 +200,7 @@ class CurrencyManagementTest extends TestCase
 
         $response->assertStatus(200)
                 ->assertJson([
-                    'message' => 'Display settings updated successfully'
+                    'message' => 'Currency display settings updated successfully'
                 ]);
 
         $this->user->refresh();

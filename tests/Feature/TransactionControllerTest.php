@@ -19,7 +19,7 @@ class TransactionControllerTest extends TestCase
         $this->actingAs($this->user);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function it_can_create_an_expense_transaction()
     {
         $category = ExpenseCategory::factory()->create(['user_id' => $this->user->id]);
@@ -29,6 +29,7 @@ class TransactionControllerTest extends TestCase
             'amount' => 100.50,
             'date' => now()->format('Y-m-d'),
             'category_id' => $category->id,
+            'currency_id' => $this->user->currency_id,
             'description' => 'Test description',
             'is_recurring' => false,
         ]);
@@ -42,7 +43,7 @@ class TransactionControllerTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function it_can_create_an_income_transaction()
     {
         $category = EarningCategory::factory()->create(['user_id' => $this->user->id]);
@@ -52,6 +53,7 @@ class TransactionControllerTest extends TestCase
             'amount' => 200.75,
             'date' => now()->format('Y-m-d'),
             'category_id' => $category->id,
+            'currency_id' => $this->user->currency_id,
             'description' => 'Test description',
             'is_recurring' => false,
         ]);
@@ -65,23 +67,23 @@ class TransactionControllerTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function it_validates_required_fields_for_expense()
     {
         $response = $this->post(route('expenses.store'), []);
 
-        $response->assertSessionHasErrors(['name', 'amount', 'date', 'category_id']);
+        $response->assertSessionHasErrors(['name', 'amount', 'category_id', 'currency_id']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function it_validates_required_fields_for_income()
     {
         $response = $this->post(route('earnings.store'), []);
 
-        $response->assertSessionHasErrors(['name', 'amount', 'date', 'category_id']);
+        $response->assertSessionHasErrors(['name', 'amount', 'category_id', 'currency_id']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function it_validates_amount_is_numeric()
     {
         $category = ExpenseCategory::factory()->create(['user_id' => $this->user->id]);
@@ -91,12 +93,13 @@ class TransactionControllerTest extends TestCase
             'amount' => 'not-a-number',
             'date' => now()->format('Y-m-d'),
             'category_id' => $category->id,
+            'currency_id' => $this->user->currency_id,
         ]);
 
         $response->assertSessionHasErrors('amount');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function it_validates_amount_is_positive()
     {
         $category = ExpenseCategory::factory()->create(['user_id' => $this->user->id]);
@@ -106,6 +109,7 @@ class TransactionControllerTest extends TestCase
             'amount' => -100,
             'date' => now()->format('Y-m-d'),
             'category_id' => $category->id,
+            'currency_id' => $this->user->currency_id,
         ]);
 
         $response->assertSessionHasErrors('amount');

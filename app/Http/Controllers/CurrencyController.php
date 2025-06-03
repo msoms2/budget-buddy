@@ -29,9 +29,22 @@ class CurrencyController extends Controller
         
         $defaultCurrency = Currency::where('is_default', true)->first();
         
+        // Get authenticated user's currency information
+        $user = auth()->user();
+        $userCurrency = null;
+        $displayedCurrencies = [];
+        
+        if ($user) {
+            $user->load('currency');
+            $userCurrency = $user->currency;
+            $displayedCurrencies = $user->displayed_currencies ?? [];
+        }
+        
         return response()->json([
             'currencies' => $currencies,
-            'default_currency' => $defaultCurrency
+            'default_currency' => $defaultCurrency,
+            'user_currency' => $userCurrency,
+            'displayed_currencies' => $displayedCurrencies
         ]);
     }
 
@@ -193,22 +206,63 @@ class CurrencyController extends Controller
             ], 422);
         }
 
+        $user = auth()->user();
+        if (!$user) {
+            return response()->json([
+                'message' => 'User not authenticated'
+            ], 401);
+        }
+
         $currency = Currency::findOrFail($request->currency_id);
 
-        // Remove default flag from all currencies
-        Currency::where('is_default', true)->update(['is_default' => false]);
+        // Check if user has displayed_currencies configured
+        $displayedCurrencies = $user->displayed_currencies ?? [];
         
-        // Set new default
-        $currency->update(['is_default' => true, 'exchange_rate' => 1.0]);
-        
-        // Update exchange rates for all other currencies
-        try {
-            $this->exchangeRateService->updateDatabaseRates();
-        } catch (\Exception $e) {
-            Log::warning("Could not update exchange rates after setting new default: " . $e->getMessage());
+        if (!empty($displayedCurrencies)) {
+            // User has displayed currencies - this is for user preference setting
+            // displayed_currencies can contain either currency codes or currency IDs
+            $isUsingCodes = is_string($displayedCurrencies[0] ?? null);
+            
+            if ($isUsingCodes) {
+                // Array contains currency codes like ['USD', 'EUR']
+                if (!in_array($currency->code, $displayedCurrencies)) {
+                    return response()->json([
+                        'error' => 'Selected currency must be in your displayed currencies list'
+                    ], 400);
+                }
+            } else {
+                // Array contains currency IDs like [1, 2]
+                $currencyCodes = Currency::whereIn('id', $displayedCurrencies)->pluck('code')->toArray();
+                
+                if (!in_array($currency->code, $currencyCodes)) {
+                    return response()->json([
+                        'error' => 'Selected currency must be in your displayed currencies list'
+                    ], 400);
+                }
+            }
+
+            // Update the user's currency preference
+            $user->currency_id = $currency->id;
+            $user->save();
+            
+            Log::info("User {$user->id} set personal default currency to: {$currency->code}");
+        } else {
+            // User has no displayed currencies - this is for system default setting
+            // Remove default flag from all currencies
+            Currency::where('is_default', true)->update(['is_default' => false]);
+            
+            // Set new system default
+            $currency->update(['is_default' => true, 'exchange_rate' => 1.0]);
+            
+            // Update exchange rates for all other currencies
+            try {
+                $this->exchangeRateService->updateDatabaseRates();
+            } catch (\Exception $e) {
+                Log::warning("Could not update exchange rates after setting new default: " . $e->getMessage());
+            }
+            
+            Log::info("System default currency set to: {$currency->code}");
         }
-        
-        Log::info("Default currency set to: {$currency->code}");
         
         return response()->json([
             'message' => 'Default currency updated successfully',
@@ -337,8 +391,8 @@ class CurrencyController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'amount' => 'required|numeric|min:0',
-            'from' => 'required|string|min:2|max:5',
-            'to' => 'required|string|min:2|max:5'
+            'from' => 'required|string|size:3|regex:/^[A-Z]{3}$/i',
+            'to' => 'required|string|size:3|regex:/^[A-Z]{3}$/i'
         ]);
 
         if ($validator->fails()) {
@@ -533,7 +587,7 @@ class CurrencyController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'displayed_currencies' => 'required|array|min:1',
-            'displayed_currencies.*' => 'required|string|max:10'
+            'displayed_currencies.*' => 'required|integer|exists:currencies,id'
         ]);
 
         if ($validator->fails()) {
@@ -629,7 +683,7 @@ class CurrencyController extends Controller
             Log::info("User {$user->id} set base currency to {$currency->code}");
             
             return response()->json([
-                'message' => 'Base currency updated successfully',
+                'message' => 'User base currency updated successfully',
                 'user' => [
                     'id' => $user->id,
                     'name' => $user->name,

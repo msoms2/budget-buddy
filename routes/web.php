@@ -38,6 +38,14 @@ Route::get('/', function () {
 });
 
 Route::get('/dashboard', function () {
+    // Handle category type persistence across sessions
+    $categoryType = request('categoryType');
+    if ($categoryType) {
+        session(['dashboard_category_type' => $categoryType]);
+    } else {
+        $categoryType = session('dashboard_category_type', 'expense');
+    }
+
     // Get the date ranges for different periods
     $now = Carbon::now();
     $startOfMonth = $now->copy()->startOfMonth();
@@ -320,6 +328,23 @@ Route::get('/dashboard', function () {
         'income' => \App\Models\EarningCategory::where('earning_categories.user_id', Auth::id())->get()
     ];
 
+    // Determine which category breakdown to use based on session
+    $categoryBreakdown = $categoryType === 'income'
+        ? collect($incomeCategoryBreakdown)->map(function ($item) {
+            return [
+                'name' => $item->name ?? '',
+                'amount' => (float)($item->total ?? 0),
+                'color' => '#' . substr(md5($item->name ?? 'unknown'), 0, 6)
+            ];
+        })->values()->all()
+        : collect($expenseCategoryBreakdown)->map(function ($item) {
+            return [
+                'name' => $item->name ?? '',
+                'amount' => (float)($item->total ?? 0),
+                'color' => '#' . substr(md5($item->name ?? 'unknown'), 0, 6)
+            ];
+        })->values()->all();
+
     return Inertia::render('Dashboard', [
         'totalBalance' => $totalBalance,
         'monthlyIncome' => $currentMonthEarnings,
@@ -361,7 +386,9 @@ Route::get('/dashboard', function () {
         'paymentSchedules' => $paymentSchedules,
         'schedulesSummary' => $schedulesSummary,
         'categories' => $categories,
-        'monthlyFinanceData' => $monthlyFinanceData // Add the monthly finance data for the chart
+        'monthlyFinanceData' => $monthlyFinanceData, // Add the monthly finance data for the chart
+        'categoryBreakdown' => $categoryBreakdown, // Add the generic category breakdown for session persistence
+        'categoryType' => $categoryType // Add the current category type
     ]);
 })->middleware(['auth', 'verified'])->name('dashboard');
 

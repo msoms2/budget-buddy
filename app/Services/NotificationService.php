@@ -326,6 +326,17 @@ class NotificationService
             ->where('notification_type_id', $notificationTypeId)
             ->first();
 
+        // Create default settings if none exist
+        if (!$setting) {
+            $setting = NotificationSetting::create([
+                'user_id' => $userId,
+                'notification_type_id' => $notificationTypeId,
+                'is_enabled' => true,
+                'frequency' => 'immediate',
+                'channels' => ['email', 'in_app']
+            ]);
+        }
+
         // If setting exists and notifications are disabled, return null
         if ($setting && !$setting->is_enabled) {
             return null;
@@ -333,8 +344,12 @@ class NotificationService
 
         // Get the notification type
         $type = NotificationType::find($notificationTypeId);
-        $user = User::find($userId);
+        if (!$type) {
+            Log::error("Notification type not found: {$notificationTypeId}");
+            return null;
+        }
         
+        $user = User::find($userId);
         if (!$user) {
             Log::error("User not found for notification: {$userId}");
             return null;

@@ -14,6 +14,7 @@ class CategoryFactory extends Factory
         return [
             'name' => $this->faker->word,
             'type' => $this->faker->randomElement(['income', 'expense']),
+            'user_id' => \App\Models\User::factory(),
         ];
     }
 

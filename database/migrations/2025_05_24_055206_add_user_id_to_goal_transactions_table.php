@@ -20,9 +20,7 @@ return new class extends Migration
             });
 
             // Update existing records with user_id from goals table
-            DB::statement('UPDATE goal_transactions, goals 
-                SET goal_transactions.user_id = goals.user_id 
-                WHERE goal_transactions.goal_id = goals.id');
+            DB::statement('UPDATE goal_transactions SET user_id = (SELECT goals.user_id FROM goals WHERE goal_transactions.goal_id = goals.id)');
         }
     }
 

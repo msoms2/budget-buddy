@@ -27,10 +27,11 @@ class ExpenseFactory extends Factory
             'user_id' => User::factory(),
             'category_id' => ExpenseCategory::factory(),
             'subcategory_id' => null, // We'll set this explicitly when needed
+            'currency_id' => \App\Models\Currency::factory(),
             'is_recurring' => $this->faker->boolean(30),
             'frequency' => function (array $attributes) {
-                return $attributes['is_recurring'] 
-                    ? $this->faker->randomElement(['monthly', 'weekly', 'yearly']) 
+                return $attributes['is_recurring']
+                    ? $this->faker->randomElement(['monthly', 'weekly', 'yearly'])
                     : null;
             },
         ];

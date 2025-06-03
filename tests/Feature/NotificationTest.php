@@ -33,26 +33,32 @@ class NotificationTest extends TestCase
 
     protected function createDefaultNotificationTypes(): void
     {
-        NotificationType::create([
-            'name' => 'Budget Limit Alert',
-            'slug' => 'budget_limit_alert',
-            'description' => 'Alert when budget limit is approached or exceeded',
-            'is_active' => true
-        ]);
+        NotificationType::updateOrCreate(
+            ['slug' => 'budget_limit_alert'],
+            [
+                'name' => 'Budget Limit Alert',
+                'description' => 'Alert when budget limit is approached or exceeded',
+                'is_active' => true
+            ]
+        );
 
-        NotificationType::create([
-            'name' => 'Large Expense Alert',
-            'slug' => 'large_expense',
-            'description' => 'Alert when a large expense is recorded',
-            'is_active' => true
-        ]);
+        NotificationType::updateOrCreate(
+            ['slug' => 'large_expense'],
+            [
+                'name' => 'Large Expense Alert',
+                'description' => 'Alert when a large expense is recorded',
+                'is_active' => true
+            ]
+        );
 
-        NotificationType::create([
-            'name' => 'Goal Progress Update',
-            'slug' => 'goal_progress_update',
-            'description' => 'Update on financial goal progress',
-            'is_active' => true
-        ]);
+        NotificationType::updateOrCreate(
+            ['slug' => 'goal_progress_update'],
+            [
+                'name' => 'Goal Progress Update',
+                'description' => 'Update on financial goal progress',
+                'is_active' => true
+            ]
+        );
     }
 
     public function test_notification_types_are_created_successfully()
@@ -65,7 +71,7 @@ class NotificationTest extends TestCase
             'slug' => 'large_expense'
         ]);
 
-        $this->assertEquals(3, NotificationType::count());
+        $this->assertEquals(4, NotificationType::count());
     }
 
     public function test_user_can_view_notification_settings()

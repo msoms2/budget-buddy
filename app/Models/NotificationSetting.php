@@ -21,6 +21,19 @@ class NotificationSetting extends Model
     ];
 
     /**
+     * The accessors to append to the model's array form.
+     */
+    protected $appends = ['notification_type'];
+
+    /**
+     * Get the notification type as notification_type (snake_case).
+     */
+    public function getNotificationTypeAttribute()
+    {
+        return $this->relationLoaded('notificationType') ? $this->notificationType : null;
+    }
+
+    /**
      * Boot function from the model.
      */
     protected static function boot()

@@ -25,7 +25,7 @@ class ReportControllerTest extends TestCase
         $this->user = User::factory()->create();
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function dashboard_displays_correct_monthly_data()
     {
         // Create test data
@@ -57,7 +57,7 @@ class ReportControllerTest extends TestCase
             );
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function comparison_report_returns_correct_data()
     {
         $this->actingAs($this->user);
@@ -89,7 +89,7 @@ class ReportControllerTest extends TestCase
             );
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function forecast_returns_correct_projection_data()
     {
         $this->actingAs($this->user);
@@ -117,7 +117,7 @@ class ReportControllerTest extends TestCase
             );
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function unauthorized_users_cannot_access_reports()
     {
         $response = $this->get(route('reports.dashboard'));
@@ -130,7 +130,7 @@ class ReportControllerTest extends TestCase
         $response->assertRedirect(route('login'));
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function dashboard_shows_correct_budget_progress()
     {
         $this->actingAs($this->user);
@@ -147,7 +147,7 @@ class ReportControllerTest extends TestCase
         Expense::factory()->create([
             'user_id' => $this->user->id,
             'amount' => 250,
-            'budget_id' => $budget->id,
+            'category_id' => $budget->category_id,
             'date' => Carbon::now()
         ]);
 

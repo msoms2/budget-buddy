@@ -109,6 +109,8 @@ Route::middleware(['web', 'auth'])->group(function () {
         Route::get('/update-status', [CurrencyController::class, 'getUpdateStatus']);
         Route::post('/clear-cache', [CurrencyController::class, 'clearRateCache']);
         Route::post('/set-default', [CurrencyController::class, 'setDefault']);
+        Route::post('/set-base', [CurrencyController::class, 'setBaseCurrency']);
+        Route::post('/display-settings', [CurrencyController::class, 'updateDisplaySettings']);
         Route::get('/current', [CurrencyController::class, 'getCurrentCurrency']);
         Route::post('/user-preference', [CurrencyController::class, 'updateUserCurrency']);
     });
