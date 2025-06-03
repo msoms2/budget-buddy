@@ -38,10 +38,23 @@ jobs:
       run: |
         sed -i 's/UPDATE goal_transactions, goals/UPDATE goal_transactions SET user_id = (SELECT goals.user_id FROM goals WHERE goal_transactions.goal_id = goals.id)/g' database/migrations/2025_05_24_055206_add_user_id_to_goal_transactions_table.php
     
-    - name: Fix API Module Import Path
+    - name: Fix Module Import Paths
       run: |
+        # Fix API path case sensitivity
         mkdir -p resources/js/utils
         cp resources/js/Utils/api.js resources/js/utils/api.js
+        
+        # Fix Component case sensitivity
+        mkdir -p resources/js/Components
+        cp -f resources/js/components/NotificationBell.jsx resources/js/Components/NotificationBell.jsx
+        
+        # Fix imports in app-sidebar.jsx
+        sed -i 's|import { NotificationBell } from "@/components/NotificationBell"|import { NotificationBell } from "@/Components/NotificationBell"|g' resources/js/components/app-sidebar.jsx
+        
+        # Check if imports were successful
+        echo "Checking copied files:"
+        ls -la resources/js/utils/
+        ls -la resources/js/Components/
         
     - name: Build Vite Assets
       run: |
@@ -66,10 +79,23 @@ jobs:
     - name: Install NPM Dependencies
       run: npm ci
     
-    - name: Fix API Module Import Path
+    - name: Fix Module Import Paths
       run: |
+        # Fix API path case sensitivity
         mkdir -p resources/js/utils
         cp resources/js/Utils/api.js resources/js/utils/api.js
+        
+        # Fix Component case sensitivity
+        mkdir -p resources/js/Components
+        cp -f resources/js/components/NotificationBell.jsx resources/js/Components/NotificationBell.jsx
+        
+        # Fix imports in app-sidebar.jsx
+        sed -i 's|import { NotificationBell } from "@/components/NotificationBell"|import { NotificationBell } from "@/Components/NotificationBell"|g' resources/js/components/app-sidebar.jsx
+        
+        # Check if imports were successful
+        echo "Checking copied files:"
+        ls -la resources/js/utils/
+        ls -la resources/js/Components/
     
     - name: Build Frontend Assets
       run: npm run build
@@ -117,10 +143,23 @@ jobs:
       run: |
         sed -i 's/UPDATE goal_transactions, goals/UPDATE goal_transactions SET user_id = (SELECT goals.user_id FROM goals WHERE goal_transactions.goal_id = goals.id)/g' database/migrations/2025_05_24_055206_add_user_id_to_goal_transactions_table.php
     
-    - name: Fix API Module Import Path
+    - name: Fix Module Import Paths
       run: |
+        # Fix API path case sensitivity
         mkdir -p resources/js/utils
         cp resources/js/Utils/api.js resources/js/utils/api.js
+        
+        # Fix Component case sensitivity
+        mkdir -p resources/js/Components
+        cp -f resources/js/components/NotificationBell.jsx resources/js/Components/NotificationBell.jsx
+        
+        # Fix imports in app-sidebar.jsx
+        sed -i 's|import { NotificationBell } from "@/components/NotificationBell"|import { NotificationBell } from "@/Components/NotificationBell"|g' resources/js/components/app-sidebar.jsx
+        
+        # Check if imports were successful
+        echo "Checking copied files:"
+        ls -la resources/js/utils/
+        ls -la resources/js/Components/
     
     - name: Build Frontend Assets
       run: npm run build
@@ -136,3 +175,4 @@ jobs:
     
     - name: Run E2E Tests
       run: npx playwright test || true # Continue even if E2E tests fail temporarily
+
