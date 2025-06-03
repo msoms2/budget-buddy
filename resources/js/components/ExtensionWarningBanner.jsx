@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { X, AlertTriangle, ExternalLink } from 'lucide-react';
-import { detectExtensionConflicts } from '@/utils/extensionDetection';
+import { detectExtensionConflicts } from '@/Utils/extensionDetection';
 
 export default function ExtensionWarningBanner() {
   const [isVisible, setIsVisible] = useState(false);

@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Download, Loader2, AlertTriangle } from 'lucide-react';
-import { detectExtensionConflicts, monitorExtensionErrors } from '@/utils/extensionDetection';
+import { detectExtensionConflicts, monitorExtensionErrors } from '@/Utils/extensionDetection';
 
 export default function ExportDialog({ open, setOpen }) {
   const [isLoading, setIsLoading] = useState(false);
