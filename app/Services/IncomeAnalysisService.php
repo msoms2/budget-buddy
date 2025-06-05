@@ -42,6 +42,7 @@ class IncomeAnalysisService
     public function analyzeIncomeDiversity(): array
     {
         $earnings = Earning::select('category_id', DB::raw('SUM(amount) as total_amount'))
+            ->where('user_id', auth()->id())
             ->groupBy('category_id')
             ->get();
 
@@ -73,8 +74,15 @@ class IncomeAnalysisService
             }
         }
 
+        // Normalize diversity score to 0-10 scale
+        // Shannon's index typically ranges from 0 to ln(n) where n is number of categories
+        // For practical purposes, we'll map it to 0-10 scale
+        $maxPossibleScore = log(10); // Assuming max 10 categories for scaling
+        $normalizedScore = ($diversityScore / $maxPossibleScore) * 10;
+        $normalizedScore = min(10, max(0, $normalizedScore)); // Ensure 0-10 range
+
         return [
-            'diversity_score' => round($diversityScore, 2),
+            'diversity_score' => round($normalizedScore, 2),
                 'sources' => collect($sources)->map(function ($source, $name) {
                     return [
                         'name' => $name,
@@ -105,6 +113,7 @@ class IncomeAnalysisService
             DB::raw('DATE_FORMAT(date, "%Y-%m") as month'),
             DB::raw('SUM(amount) as total_amount')
         )
+        ->where('user_id', auth()->id())
         ->groupBy('month')
         ->orderBy('month')
         ->get();
@@ -138,9 +147,9 @@ class IncomeAnalysisService
                     }
                 }
 
-                // Calculate stability score (0-100)
+                // Calculate stability score (0-10)
                 $variancePercentage = ($standardDeviation / $mean) * 100;
-                $stabilityScore = max(0, min(100, 100 - $variancePercentage));
+                $stabilityScore = max(0, min(10, 10 - ($variancePercentage / 10)));
             }
         }
 
@@ -173,11 +182,12 @@ class IncomeAnalysisService
         
         // Continue with frequency analysis if column exists
         $earnings = Earning::select('frequency', 'is_recurring', DB::raw('SUM(amount) as total_amount'))
+            ->where('user_id', auth()->id())
             ->whereNotNull('frequency')
             ->groupBy('frequency', 'is_recurring')
             ->get();
 
-        $totalIncome = Earning::sum('amount');
+        $totalIncome = Earning::where('user_id', auth()->id())->sum('amount');
         $frequencies = [];
         $recurringTotal = 0;
 
@@ -197,11 +207,11 @@ class IncomeAnalysisService
             }
         }
 
-        // Calculate recurring percentage safely
-        $recurringPercentage = $totalIncome > 0 ? ($recurringTotal / $totalIncome) * 100 : 0;
+        // Calculate recurring percentage safely as decimal (0-1)
+        $recurringPercentage = $totalIncome > 0 ? ($recurringTotal / $totalIncome) : 0;
 
         return [
-            'recurring_percentage' => round($recurringPercentage, 2),
+            'recurring_percentage' => round($recurringPercentage, 4),
             'frequency_breakdown' => $frequencies,
             'most_reliable_streams' => []
         ];
@@ -218,7 +228,8 @@ class IncomeAnalysisService
         $sixMonthsAgo = $now->copy()->subMonths(6);
         
         // Get historical data
-        $historicalEarnings = Earning::where('date', '>=', $sixMonthsAgo)
+        $historicalEarnings = Earning::where('user_id', auth()->id())
+            ->where('date', '>=', $sixMonthsAgo)
             ->get()
             ->groupBy(function($earning) {
                 return Carbon::parse($earning->date)->format('Y-m');
@@ -270,7 +281,8 @@ class IncomeAnalysisService
      */
     private function calculateRecurringIncome(): float
     {
-        return Earning::where('is_recurring', true)
+        return Earning::where('user_id', auth()->id())
+            ->where('is_recurring', true)
             ->sum('amount');
     }
 

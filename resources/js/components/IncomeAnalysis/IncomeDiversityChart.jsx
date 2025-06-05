@@ -6,29 +6,19 @@ import { Alert, AlertDescription } from "../ui/alert";
 export default function IncomeDiversityChart({ data, isLoading, error }) {
   if (error) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Income Distribution</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        </CardContent>
-      </Card>
+      <div className="h-full flex items-center justify-center">
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      </div>
     );
   }
 
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Income Distribution</CardTitle>
-        </CardHeader>
-        <CardContent className="h-[300px] flex items-center justify-center">
-          <div className="animate-pulse h-48 w-48 rounded-full bg-gray-200 dark:bg-gray-700" />
-        </CardContent>
-      </Card>
+      <div className="h-full flex items-center justify-center">
+        <div className="animate-pulse h-48 w-48 rounded-full bg-gray-200 dark:bg-gray-700" />
+      </div>
     );
   }
 
@@ -92,78 +82,73 @@ export default function IncomeDiversityChart({ data, isLoading, error }) {
   const hasValidSources = Array.isArray(data?.sources) && data.sources.length > 0;
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Income Distribution</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <div className="h-[300px]">
-            {hasValidSources ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={data.sources}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={renderCustomizedLabel}
-                    outerRadius={120}
-                    fill="#8884d8"
-                    dataKey="value"
-                    nameKey="name"
-                  >
-                    {data.sources.map((entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={COLORS[index % COLORS.length]}
-                        stroke="rgba(255,255,255,0.3)"
-                        strokeWidth={1}
-                      />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "var(--card)",
-                      borderRadius: "6px",
-                      border: "none",
-                      padding: "8px",
-                      boxShadow: "var(--shadow-md)",
-                      color: "var(--foreground)",
-                    }}
-                    formatter={(value, name) => [
-                      `$${value.toLocaleString()}`,
-                      `Source: ${name}`,
-                    ]}
+    <div className="h-full flex flex-col space-y-4">
+      {/* Chart Section */}
+      <div className="flex-1 min-h-0">
+        {hasValidSources ? (
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={data.sources}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                label={renderCustomizedLabel}
+                outerRadius={110}
+                fill="#8884d8"
+                dataKey="value"
+                nameKey="name"
+              >
+                {data.sources.map((entry, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={COLORS[index % COLORS.length]}
+                    stroke="rgba(255,255,255,0.3)"
+                    strokeWidth={1}
                   />
-                </PieChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="h-full flex flex-col items-center justify-center text-muted-foreground">
-                <p>No income data available</p>
-                <p className="text-sm mt-2">Add some income sources to see the distribution</p>
-              </div>
-            )}
+                ))}
+              </Pie>
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "rgba(255, 255, 255, 0.95)",
+                  borderRadius: "6px",
+                  border: "none",
+                  padding: "8px",
+                  boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                  color: "#000",
+                  fontSize: "12px"
+                }}
+                formatter={(value, name) => [
+                  `$${value.toLocaleString()}`,
+                  `Source: ${name}`,
+                ]}
+              />
+            </PieChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="h-full flex flex-col items-center justify-center text-muted-foreground">
+            <p>No income data available</p>
+            <p className="text-sm mt-2">Add some income sources to see the distribution</p>
           </div>
-          {(data?.primarySource?.percentage || data?.secondarySource?.percentage) && (
-            <div className="space-y-2 bg-muted/50 dark:bg-gray-700/50 rounded-lg p-4">
-              <p className="text-sm font-medium">Key Insights</p>
-              {data?.primarySource?.percentage && (
-                <p className="text-sm text-muted-foreground">
-                  Primary Source: {data.primarySource.name} (
-                  {Math.round(data.primarySource.percentage)}%)
-                </p>
-              )}
-              {data?.secondarySource?.percentage && (
-                <p className="text-sm text-muted-foreground">
-                  Secondary Source: {data.secondarySource.name} (
-                  {Math.round(data.secondarySource.percentage)}%)
-                </p>
-              )}
-            </div>
+        )}
+      </div>
+
+      {/* Key Insights Section */}
+      {(data?.primarySource?.percentage || data?.secondarySource?.percentage) && (
+        <div className="space-y-2 bg-muted/30 rounded-lg p-3 border-t">
+          <p className="text-sm font-medium">Key Insights</p>
+          {data?.primarySource?.percentage && (
+            <p className="text-xs text-muted-foreground">
+              Primary: {data.primarySource.name} ({Math.round(data.primarySource.percentage)}%)
+            </p>
+          )}
+          {data?.secondarySource?.percentage && (
+            <p className="text-xs text-muted-foreground">
+              Secondary: {data.secondarySource.name} ({Math.round(data.secondarySource.percentage)}%)
+            </p>
           )}
         </div>
-      </CardContent>
-    </Card>
+      )}
+    </div>
   );
 }

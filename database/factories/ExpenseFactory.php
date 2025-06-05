@@ -27,7 +27,21 @@ class ExpenseFactory extends Factory
             'user_id' => User::factory(),
             'category_id' => ExpenseCategory::factory(),
             'subcategory_id' => null, // We'll set this explicitly when needed
-            'currency_id' => \App\Models\Currency::factory(),
+            'currency_id' => function () {
+                $currency = \App\Models\Currency::where('code', 'USD')->first();
+                if (!$currency) {
+                    $currency = \App\Models\Currency::create([
+                        'code' => 'USD',
+                        'name' => 'US Dollar',
+                        'symbol' => '$',
+                        'exchange_rate' => 1.0000,
+                        'format' => '$#,##0.00',
+                        'decimal_places' => 2,
+                        'is_default' => true,
+                    ]);
+                }
+                return $currency->id;
+            },
             'is_recurring' => $this->faker->boolean(30),
             'frequency' => function (array $attributes) {
                 return $attributes['is_recurring']

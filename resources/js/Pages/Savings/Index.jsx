@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { 
   Card,
@@ -23,11 +23,12 @@ import {
 import { 
   PlusIcon, 
   PiggyBankIcon,
-  TrendingUpIcon, 
-  CheckCircleIcon, 
+  TrendingUpIcon,
+  CheckCircleIcon,
   ClockIcon,
   TargetIcon,
   DollarSignIcon,
+  CogIcon,
   BarChart3Icon,
   CalendarIcon,
   TimerIcon,
@@ -39,6 +40,7 @@ import { useCurrency } from '@/hooks/useCurrency.jsx';
  
 import SavingsModal from './Partials/SavingsModal';
 import ProgressModal from './Partials/ProgressModal';
+import SavingsCategoryModal from './Partials/SavingsCategoryModal';
 import SavingsPlanCard from './components/SavingsPlanCard';
 
 export default function Index({ auth, savings, categories }) {
@@ -46,7 +48,9 @@ export default function Index({ auth, savings, categories }) {
   const [activeTab, setActiveTab] = useState('overview');
   const [showSavingsModal, setShowSavingsModal] = useState(false);
   const [showProgressModal, setShowProgressModal] = useState(false);
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [selectedSavings, setSelectedSavings] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [summaryStats, setSummaryStats] = useState({
@@ -176,6 +180,17 @@ export default function Index({ auth, savings, categories }) {
               <Button onClick={openCreateSavingsModal} className="flex items-center gap-1 bg-blue-600 hover:bg-blue-700">
                 <PlusIcon className="h-4 w-4" />
                 Add Savings Plan
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setSelectedCategory(null);
+                  setShowCategoryModal(true);
+                }}
+                className="flex items-center gap-1"
+              >
+                <CogIcon className="h-4 w-4" />
+                Manage Categories
               </Button>
             </div>
           </header>
@@ -412,19 +427,35 @@ export default function Index({ auth, savings, categories }) {
 
           {/* Modals */}
           {showSavingsModal && (
-            <SavingsModal 
-              isOpen={showSavingsModal} 
-              onClose={closeSavingsModal} 
-              savings={selectedSavings} 
+            <SavingsModal
+              isOpen={showSavingsModal}
+              onClose={closeSavingsModal}
+              savings={selectedSavings}
               categories={categories}
             />
           )}
 
           {showProgressModal && selectedSavings && (
-            <ProgressModal 
-              isOpen={showProgressModal} 
-              onClose={closeProgressModal} 
+            <ProgressModal
+              isOpen={showProgressModal}
+              onClose={closeProgressModal}
               savings={selectedSavings}
+            />
+          )}
+
+          {showCategoryModal && (
+            <SavingsCategoryModal
+              isOpen={showCategoryModal}
+              onClose={() => setShowCategoryModal(false)}
+              category={selectedCategory}
+              onSuccess={async () => {
+                try {
+                  await router.reload({ only: ['categories'] });
+                  setShowCategoryModal(false);
+                } catch (error) {
+                  console.error('Error reloading categories:', error);
+                }
+              }}
             />
           )}
         </SidebarInset>

@@ -302,7 +302,7 @@ export default function AdminUsers({ auth, users, stats = {} }) {
     const headerActions = (
         <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" asChild>
-                <Link href={route('admin.analytics')}>
+                <Link href={route('admin.analytics.index')}>
                     <EyeIcon className="h-4 w-4 mr-2" />
                     Analytics
                 </Link>

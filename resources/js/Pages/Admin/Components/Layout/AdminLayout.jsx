@@ -47,7 +47,7 @@ export default function AdminLayout({
     const baseBreadcrumbs = [
       {
         label: "Admin",
-        href: route('admin.dashboard'),
+        href: route('admin.index'),
         icon: Home
       }
     ];
@@ -131,7 +131,7 @@ AdminLayout.BackButton = function BackButton({ className = "" }) {
   return (
     <Button variant="outline" size="sm" asChild className={className}>
       <Link 
-        href={route('admin.dashboard')} 
+        href={route('admin.index')} 
         className="flex items-center gap-2"
         aria-label="Back to admin dashboard"
       >

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\ExpenseCategory;
+use App\Models\Currency;
+use App\Models\PaymentMethod;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -115,11 +117,17 @@ class ExpenseCategoryController extends Controller
             'period' => $period
         ];
 
+        // Get currencies and payment methods for the transaction form
+        $currencies = Currency::where('is_active', true)->get();
+        $paymentMethods = PaymentMethod::where('user_id', Auth::id())->get();
+
         return Inertia::render('ExpenseCategories/Show', [
             'expenseCategory' => $expenseCategory,
             'expenses' => $expenses,
             'subcategories' => $subcategories,
-            'allTransactionsData' => $allTransactionsData
+            'allTransactionsData' => $allTransactionsData,
+            'currencies' => $currencies,
+            'paymentMethods' => $paymentMethods
         ]);
     }
 

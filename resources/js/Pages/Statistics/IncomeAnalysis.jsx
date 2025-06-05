@@ -300,41 +300,45 @@ export default function IncomeAnalysis({ incomeAnalysis, isLoading, error }) {
                                     />
                                     
                                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                        <div className="space-y-4">
-                                            <div className="space-y-2">
-                                                <h3 className="flex items-center gap-2 text-lg font-semibold">
+                                        <Card className="border-0 shadow-md">
+                                            <CardHeader className="border-b bg-muted/30">
+                                                <CardTitle className="flex items-center gap-2 text-lg font-semibold">
                                                     <PieChartIcon className="h-5 w-5 text-blue-600" />
                                                     Income Sources Overview
-                                                </h3>
-                                                <p className="text-sm text-muted-foreground">
+                                                </CardTitle>
+                                                <CardDescription className="text-sm">
                                                     Distribution and breakdown of your income sources
-                                                </p>
-                                            </div>
-                                            <div className="h-[350px]">
-                                                <IncomeDiversityChart
-                                                    data={incomeAnalysis}
-                                                    isLoading={isLoading}
-                                                />
-                                            </div>
-                                        </div>
+                                                </CardDescription>
+                                            </CardHeader>
+                                            <CardContent className="p-6">
+                                                <div className="h-[350px]">
+                                                    <IncomeDiversityChart
+                                                        data={incomeAnalysis}
+                                                        isLoading={isLoading}
+                                                    />
+                                                </div>
+                                            </CardContent>
+                                        </Card>
 
-                                        <div className="space-y-4">
-                                            <div className="space-y-2">
-                                                <h3 className="flex items-center gap-2 text-lg font-semibold">
+                                        <Card className="border-0 shadow-md">
+                                            <CardHeader className="border-b bg-muted/30">
+                                                <CardTitle className="flex items-center gap-2 text-lg font-semibold">
                                                     <LineChartIcon className="h-5 w-5 text-green-600" />
                                                     Stability Trends
-                                                </h3>
-                                                <p className="text-sm text-muted-foreground">
+                                                </CardTitle>
+                                                <CardDescription className="text-sm">
                                                     Monthly income stability and variance analysis
-                                                </p>
-                                            </div>
-                                            <div className="h-[350px]">
-                                                <IncomeStabilityChart
-                                                    data={incomeAnalysis}
-                                                    isLoading={isLoading}
-                                                />
-                                            </div>
-                                        </div>
+                                                </CardDescription>
+                                            </CardHeader>
+                                            <CardContent className="p-6">
+                                                <div className="h-[350px]">
+                                                    <IncomeStabilityChart
+                                                        data={incomeAnalysis}
+                                                        isLoading={isLoading}
+                                                    />
+                                                </div>
+                                            </CardContent>
+                                        </Card>
                                     </div>
                                 </div>
                             )}

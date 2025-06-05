@@ -60,14 +60,13 @@ function AppSidebar({
   const settings = usePage().props.settings || {};
   const sidebarItems = settings.sidebarItems || {
     dashboard: true,
-    statistics: true,
+    analyticsAndIncome: true,
     categories: true,
     transactions: true,
     budgets: true,
     goals: true,
     savings: true,
     debtManagement: true,
-    paymentSchedules: true,
     investments: true,
     reports: true,
     adminPanel: true
@@ -136,7 +135,7 @@ function AppSidebar({
       current: currentRouteName === 'dashboard'
     },
     {
-      id: 'statistics',
+      id: 'analyticsAndIncome',
       title: "Statistics",
       icon: ChartNoAxesCombined,
       current: currentRouteName?.startsWith('statistics.') || currentRouteName === 'income-analysis',
@@ -230,7 +229,7 @@ function AppSidebar({
       id: 'adminPanel',
       title: "Admin Panel",
       icon: UsersIcon,
-      url: route('admin.dashboard'),
+      url: route('admin.index'),
       current: currentRouteName?.startsWith('admin.')
     });
   }

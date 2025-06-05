@@ -3,101 +3,65 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use App\Models\User;
-use App\Models\Currency;
-use App\Models\PaymentMethod;
-use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
+    /**
+     * Seed the application's database.
+     */
     public function run(): void
     {
-        // Check if we already have currencies
-        if (Currency::count() === 0) {
-            // Create default currencies only if none exist
-            Currency::create([
-                'code' => 'USD',
-                'name' => 'US Dollar',
-                'symbol' => '$',
-                'exchange_rate' => 1.00,
-                'format' => '$%s',
-                'decimal_places' => 2,
-                'is_default' => true,
-            ]);
-
-            Currency::create([
-                'code' => 'EUR',
-                'name' => 'Euro',
-                'symbol' => '€',
-                'exchange_rate' => 0.92,
-                'format' => '€%s',
-                'decimal_places' => 2,
-                'is_default' => false,
-            ]);
-
-            Currency::create([
-                'code' => 'GBP',
-                'name' => 'British Pound',
-                'symbol' => '£',
-                'exchange_rate' => 0.79,
-                'format' => '£%s',
-                'decimal_places' => 2,
-                'is_default' => false,
-            ]);
-        }
-
-        // Get default currency
-        $defaultCurrency = Currency::where('is_default', true)->first();
-
-        // Check if we already have an admin user
-        $admin = User::where('email', 'admin@example.com')->first();
+        // Run seeders in proper dependency order
+        $this->command->info('Starting seeding process...');
         
-        // Create admin user if not exists
-        if (!$admin) {
-            $admin = User::factory()->create([
-                'name' => 'Admin User',
-                'email' => 'admin@example.com',
-                'password' => Hash::make('password'),
-                'email_verified_at' => now(),
-                'currency_id' => $defaultCurrency->id,
-            ]);
-        }
-
-        // Check if payment methods already exist
-        if (PaymentMethod::count() === 0) {
-            // Create payment methods
-            $paymentMethods = [
-                'Cash'          => 'Physical currency transactions',
-                'Credit Card'   => 'Credit card payments',
-                'Debit Card'    => 'Direct bank card payments',
-                'Bank Transfer' => 'Direct bank to bank transfers',
-                'PayPal'        => 'PayPal digital payments',
-                'Mobile Payment'=> 'Digital wallet and mobile payment apps',
-            ];
-
-            foreach ($paymentMethods as $name => $description) {
-                PaymentMethod::factory()
-                    ->active()
-                    ->withName($name)
-                    ->create([
-                        'description' => $description,
-                        'user_id' => $admin->id,
-                    ]);
-            }
-        }
-
-        // Run other seeders in proper order
-        $this->call([
-            CountrySeeder::class,                // Add countries before users
-            UserSeeder::class,
-            RoleSeeder::class,
-            CategorySeeder::class,
-            FinancialDataSeeder::class,
-            InvestmentSeeder::class,
-            InvestmentPerformanceSeeder::class,  // Add investment performance logs
-            CreditorSeeder::class,               // Add creditor data
-            PaymentScheduleSeeder::class,        // Add payment schedules
-            GoalSeeder::class,
-        ]);
+        // Base data
+        $this->command->info('Seeding currencies...');
+        $this->call(CurrencySeeder::class);
+        
+        $this->command->info('Seeding countries...');
+        $this->call(CountrySeeder::class);
+        
+        $this->command->info('Seeding users...');
+        $this->call(UserSeeder::class); // This provides admin user needed by other seeders
+        
+        $this->command->info('Seeding roles...');
+        $this->call(RoleSeeder::class);
+        
+        // Categories and types
+        $this->command->info('Seeding categories...');
+        $this->call(CategorySeeder::class); // This should now successfully run
+        
+        $this->command->info('Seeding savings categories...');
+        $this->call(SavingsCategorySeeder::class);
+        
+        $this->command->info('Seeding notification types...');
+        $this->call(NotificationTypeSeeder::class);
+        
+        $this->command->info('Seeding currency and payment methods...');
+        $this->call(CurrencyAndPaymentSeeder::class);
+        
+        // Financial data
+        $this->command->info('Seeding financial data...');
+        $this->call(TempFinancialDataSeeder::class); // Using optimized version to prevent hanging
+        
+        $this->command->info('Seeding creditors...');
+        $this->call(CreditorSeeder::class);
+        
+        $this->command->info('Seeding goals...');
+        $this->call(GoalSeeder::class);
+        
+        $this->command->info('Seeding investments...');
+        $this->call(InvestmentSeeder::class);
+        
+        $this->command->info('Seeding investment performance...');
+        $this->call(InvestmentPerformanceSeeder::class);
+        
+        $this->command->info('Seeding payment schedules...');
+        $this->call(PaymentScheduleSeeder::class);
+        
+        $this->command->info('Database seeding completed successfully!');
+        
+        // Additional test data if needed
+        // $this->call(IncomeTestDataSeeder::class); // Uncomment if you need test income data
     }
 }

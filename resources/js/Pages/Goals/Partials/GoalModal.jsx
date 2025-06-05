@@ -170,43 +170,77 @@ export default function GoalModal({ isOpen, onClose, goal = null, categories = [
                             </SelectTrigger>
                             <SelectContent className="max-h-[300px]">
                                 <SelectItem value="none">No Category</SelectItem>
-                                
-                                {/* Display parent categories with their subcategories */}
-                                {categories.mainCategories && categories.mainCategories.map(mainCategory => (
-                                    <SelectGroup key={mainCategory.id}>
-                                        <SelectLabel className="font-medium text-gray-700 dark:text-gray-300">
-                                            {mainCategory.name}
-                                        </SelectLabel>
-                                        
-                                        {categories.subcategories && categories.subcategories[mainCategory.id] ? (
-                                            categories.subcategories[mainCategory.id].map(subcategory => (
-                                                <SelectItem 
-                                                    key={subcategory.id} 
+
+                                {/* Income Categories Section */}
+                                <SelectGroup>
+                                    <SelectLabel
+                                        className="font-semibold text-gray-500 dark:text-gray-400 pointer-events-none select-none"
+                                    >
+                                        ---INCOME---
+                                    </SelectLabel>
+                                    
+                                    {categories.mainCategories?.filter(cat => cat.type === 'income').map(mainCategory => (
+                                        <React.Fragment key={mainCategory.id}>
+                                            <SelectItem
+                                                value={mainCategory.id.toString()}
+                                                className="font-medium"
+                                            >
+                                                {mainCategory.name}
+                                            </SelectItem>
+                                            
+                                            {categories.subcategories?.[mainCategory.id]?.map(subcategory => (
+                                                <SelectItem
+                                                    key={`income-${mainCategory.id}-${subcategory.id}`}
                                                     value={subcategory.id.toString()}
                                                     className="pl-6"
                                                 >
                                                     {subcategory.name}
                                                 </SelectItem>
-                                            ))
-                                        ) : (
-                                            <SelectItem disabled className="text-gray-400 pl-6">
-                                                No subcategories
+                                            ))}
+                                        </React.Fragment>
+                                    ))}
+                                </SelectGroup>
+
+                                {/* Expense Categories Section */}
+                                <SelectGroup>
+                                    <SelectLabel
+                                        className="font-semibold text-gray-500 dark:text-gray-400 pointer-events-none select-none mt-2"
+                                    >
+                                        ---EXPENSE---
+                                    </SelectLabel>
+                                    
+                                    {categories.mainCategories?.filter(cat => cat.type === 'expense').map(mainCategory => (
+                                        <React.Fragment key={mainCategory.id}>
+                                            <SelectItem
+                                                value={mainCategory.id.toString()}
+                                                className="font-medium"
+                                            >
+                                                {mainCategory.name}
                                             </SelectItem>
-                                        )}
-                                    </SelectGroup>
-                                ))}
-                                
-                                {/* Add an "Other" group for subcategories without a parent */}
-                                {categories.subcategories && categories.subcategories.null && (
+                                            
+                                            {categories.subcategories?.[mainCategory.id]?.map(subcategory => (
+                                                <SelectItem
+                                                    key={`expense-${mainCategory.id}-${subcategory.id}`}
+                                                    value={subcategory.id.toString()}
+                                                    className="pl-6"
+                                                >
+                                                    {subcategory.name}
+                                                </SelectItem>
+                                            ))}
+                                        </React.Fragment>
+                                    ))}
+                                </SelectGroup>
+
+                                {/* Other Categories */}
+                                {categories.subcategories?.null && categories.subcategories.null.length > 0 && (
                                     <SelectGroup>
-                                        <SelectLabel className="font-medium text-gray-700 dark:text-gray-300">
+                                        <SelectLabel className="font-medium text-gray-700 dark:text-gray-300 mt-2">
                                             Other
                                         </SelectLabel>
                                         {categories.subcategories.null.map(subcategory => (
-                                            <SelectItem 
-                                                key={subcategory.id} 
+                                            <SelectItem
+                                                key={`other-${subcategory.id}`}
                                                 value={subcategory.id.toString()}
-                                                className="pl-6"
                                             >
                                                 {subcategory.name}
                                             </SelectItem>

@@ -11,8 +11,15 @@ class CategorySeeder extends Seeder
 {
     public function run(): void
     {
-        // Get admin user
-        $adminUser = User::where('email', 'admin@example.com')->first();
+        // Get admin user or create if doesn't exist
+        $adminUser = User::firstOrCreate(
+            ['email' => 'admin@example.com'],
+            [
+                'name' => 'Admin User',
+                'password' => bcrypt('password'),
+                'email_verified_at' => now(),
+            ]
+        );
         
         // Income Categories - Exactly 4 categories with 3 subcategories each
         $incomeCategories = [
@@ -61,12 +68,12 @@ class CategorySeeder extends Seeder
 
             // Create subcategories
             foreach ($subcategories as $subcategoryName) {
-                ExpenseCategory::factory()
-                    ->asSubcategory($category)
-                    ->create([
-                        'name' => $subcategoryName,
-                        'is_system' => true
-                    ]);
+                ExpenseCategory::factory()->create([
+                    'name' => $subcategoryName,
+                    'user_id' => $adminUser->id,
+                    'is_system' => true,
+                    'parent_id' => $category->id
+                ]);
             }
         }
     }

@@ -19,7 +19,7 @@ export default function IncomeAnalysisOverview({ data, isLoading, error }) {
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-3">
+    <div className="grid gap-4 md:grid-cols-2">
       <Card className="col-span-1">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Diversity Score</CardTitle>
@@ -34,24 +34,6 @@ export default function IncomeAnalysisOverview({ data, isLoading, error }) {
           )}
           <p className="text-xs text-muted-foreground">
             Based on income source distribution
-          </p>
-        </CardContent>
-      </Card>
-
-      <Card className="col-span-1">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Stability Score</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <Skeleton className="h-9 w-[100px]" />
-          ) : (
-            <div className="text-2xl font-bold">
-              {Number(data?.stabilityScore || 0).toFixed(1)}/10
-            </div>
-          )}
-          <p className="text-xs text-muted-foreground">
-            Based on income consistency
           </p>
         </CardContent>
       </Card>

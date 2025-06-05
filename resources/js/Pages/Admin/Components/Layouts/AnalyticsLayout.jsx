@@ -100,7 +100,7 @@ export default function AnalyticsLayout({
   const analyticsBreadcrumbs = [
     {
       label: "Analytics",
-      href: route('admin.dashboard'),
+      href: route('admin.index'),
       icon: TrendingUp
     },
     ...breadcrumbs

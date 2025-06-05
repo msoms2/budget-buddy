@@ -41,7 +41,21 @@ class SavingsFactory extends Factory
             'target_date' => $this->faker->dateTimeBetween('+1 month', '+3 years'),
             'user_id' => User::factory(),
             'category_id' => ExpenseCategory::factory(),
-            'currency_id' => Currency::factory(),
+            'currency_id' => function () {
+                $currency = Currency::where('code', 'USD')->first();
+                if (!$currency) {
+                    $currency = Currency::create([
+                        'code' => 'USD',
+                        'name' => 'US Dollar',
+                        'symbol' => '$',
+                        'exchange_rate' => 1.0000,
+                        'format' => '$#,##0.00',
+                        'decimal_places' => 2,
+                        'is_default' => true,
+                    ]);
+                }
+                return $currency->id;
+            },
             'status' => $currentAmount >= $targetAmount ? 'completed' : 'active',
         ];
     }

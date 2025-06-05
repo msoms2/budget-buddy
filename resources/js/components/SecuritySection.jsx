@@ -30,16 +30,16 @@ export default function SecuritySection() {
     };
 
     return (
-        <Card className="shadow-sm">
+        <Card className="shadow-sm opacity-50">
             <CardHeader className="pb-4">
                 <div className="flex items-center gap-3">
-                    <div className="p-2 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
+                    <div className="p-2 bg-purple-100 dark:bg-purple-900/20 rounded-lg opacity-70">
                         <Shield className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                     </div>
                     <div>
                         <CardTitle className="text-xl">Enhanced Security</CardTitle>
                         <CardDescription>
-                            Configure additional security features for your account.
+                            Configure additional security features for your account. (Currently disabled)
                         </CardDescription>
                     </div>
                 </div>
@@ -57,6 +57,7 @@ export default function SecuritySection() {
                             id="two_factor_enabled"
                             checked={data.two_factor_enabled}
                             onCheckedChange={(checked) => setData('two_factor_enabled', checked)}
+                            disabled
                         />
                     </div>
 
@@ -71,6 +72,7 @@ export default function SecuritySection() {
                             id="browser_sessions_enabled"
                             checked={data.browser_sessions_enabled}
                             onCheckedChange={(checked) => setData('browser_sessions_enabled', checked)}
+                            disabled
                         />
                     </div>
 
@@ -85,13 +87,14 @@ export default function SecuritySection() {
                             id="login_notifications"
                             checked={data.login_notifications}
                             onCheckedChange={(checked) => setData('login_notifications', checked)}
+                            disabled
                         />
                     </div>
                 </CardContent>
                 <CardFooter className="bg-muted/30">
-                    <Button type="submit" disabled={processing} className="flex items-center gap-2">
+                    <Button type="submit" disabled={true} className="flex items-center gap-2 opacity-50 cursor-not-allowed">
                         <Save className="h-4 w-4" />
-                        {processing ? 'Saving...' : 'Save Security Settings'}
+                        Save Security Settings (Disabled)
                     </Button>
                 </CardFooter>
             </form>

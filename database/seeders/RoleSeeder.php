@@ -32,9 +32,14 @@ class RoleSeeder extends Seeder
         );
         
         // Assign admin role to admin user
-        $adminUser = User::where('email', 'admin@example.com')->first();
-        if ($adminUser) {
-            $adminUser->roles()->sync([$adminRole->id]);
-        }
+        $adminUser = User::firstOrCreate(
+            ['email' => 'admin@example.com'],
+            [
+                'name' => 'Admin User',
+                'password' => bcrypt('password'),
+                'email_verified_at' => now(),
+            ]
+        );
+        $adminUser->roles()->sync([$adminRole->id]);
     }
 }

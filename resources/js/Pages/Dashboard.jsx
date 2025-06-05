@@ -721,7 +721,7 @@ export default function Page({
               <CardContent>
                 <div className="space-y-4">
                   {budgets && Array.isArray(budgets) && budgets.length > 0 ? (
-                    budgets.slice(0, 5).map((budget) => {
+                    budgets.map((budget) => {
                       // Handle different potential data structures
                       // 1. Standard format with utilization property
                       // 2. Format with spent and amount directly on budget
@@ -803,11 +803,6 @@ export default function Page({
                   )}
                 </div>
               </CardContent>
-              <CardFooter>
-                <Button variant="outline" size="sm" className="w-full" asChild>
-                  <Link href="/budgets">Manage Budgets</Link>
-                </Button>
-              </CardFooter>
             </Card>
           </div>
 

@@ -27,7 +27,21 @@ class EarningFactory extends Factory
             'user_id' => User::factory(),
             'category_id' => Category::factory()->income(),
             'payment_method_id' => PaymentMethod::factory(),
-            'currency_id' => Currency::factory(),
+            'currency_id' => function () {
+                $currency = Currency::where('code', 'USD')->first();
+                if (!$currency) {
+                    $currency = Currency::create([
+                        'code' => 'USD',
+                        'name' => 'US Dollar',
+                        'symbol' => '$',
+                        'exchange_rate' => 1.0000,
+                        'format' => '$#,##0.00',
+                        'decimal_places' => 2,
+                        'is_default' => true,
+                    ]);
+                }
+                return $currency->id;
+            },
             'source' => $this->faker->randomElement(['Salary', 'Freelance', 'Investment', 'Side Project']),
             'source_type' => $this->faker->randomElement(['Active', 'Passive', 'Mixed']),
             'is_recurring' => $this->faker->boolean(70),

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Badge } from "../ui/badge";
 import {
   LineChart,
   Line,
@@ -10,18 +11,14 @@ import {
   ResponsiveContainer,
   ReferenceLine,
 } from "recharts";
+import { ShieldIcon, TrendingUpIcon, TrendingDownIcon, MinusIcon } from "lucide-react";
 
 export default function IncomeStabilityChart({ data, isLoading }) {
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Income Stability</CardTitle>
-        </CardHeader>
-        <CardContent className="h-[300px] flex items-center justify-center">
-          <div className="w-full h-48 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-        </CardContent>
-      </Card>
+      <div className="h-full flex items-center justify-center">
+        <div className="w-full h-48 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+      </div>
     );
   }
 
@@ -33,8 +30,8 @@ export default function IncomeStabilityChart({ data, isLoading }) {
   const trend = data?.trend === 'increasing' ? 1 : (data?.trend === 'decreasing' ? -1 : 0);
   
   // Calculate average income
-  const averageIncome = monthlyData.length > 0 
-    ? monthlyData.reduce((sum, item) => sum + Number(item.total_amount), 0) / monthlyData.length 
+  const averageIncome = monthlyData.length > 0
+    ? monthlyData.reduce((sum, item) => sum + Number(item.total_amount), 0) / monthlyData.length
     : 0;
 
   const formatCurrency = (value) => {
@@ -50,6 +47,25 @@ export default function IncomeStabilityChart({ data, isLoading }) {
     return "#6B7280"; // Gray for neutral
   };
 
+  // Get score color and risk level based on stability score
+  const getScoreColor = (score) => {
+    if (score >= 7) return "text-green-600 bg-green-50 dark:bg-green-900/20";
+    if (score >= 4) return "text-yellow-600 bg-yellow-50 dark:bg-yellow-900/20";
+    return "text-red-600 bg-red-50 dark:bg-red-900/20";
+  };
+
+  const getRiskLevel = (score) => {
+    if (score >= 7) return { level: "Low", variant: "default" };
+    if (score >= 4) return { level: "Medium", variant: "secondary" };
+    return { level: "High", variant: "destructive" };
+  };
+
+  const getTrendIcon = (trend) => {
+    if (trend > 0) return <TrendingUpIcon className="h-4 w-4 text-green-600" />;
+    if (trend < 0) return <TrendingDownIcon className="h-4 w-4 text-red-600" />;
+    return <MinusIcon className="h-4 w-4 text-gray-600" />;
+  };
+
   // Transform monthly data for the chart
   const chartData = monthlyData.map(item => ({
     month: item.month,
@@ -57,96 +73,114 @@ export default function IncomeStabilityChart({ data, isLoading }) {
   }));
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Income Stability</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="h-[300px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart
-              data={chartData}
-              margin={{
-                top: 5,
-                right: 30,
-                left: 20,
-                bottom: 5,
+    <div className="h-full flex flex-col space-y-4">
+      {/* Stability Score Header - Compact */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="p-1.5 rounded-full bg-green-100 dark:bg-green-900/20">
+            <ShieldIcon className="h-4 w-4 text-green-600 dark:text-green-400" />
+          </div>
+          <div>
+            <div className="text-xl font-bold">
+              {Number(stabilityScore || 0).toFixed(1)}/10
+            </div>
+            <p className="text-xs text-muted-foreground">Stability Score</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Badge variant={getRiskLevel(stabilityScore).variant} className="text-xs">
+            {getRiskLevel(stabilityScore).level} Risk
+          </Badge>
+          <div className="flex items-center gap-1">
+            {getTrendIcon(trend)}
+            <span className="text-xs font-medium" style={{ color: calculateTrendColor(trend) }}>
+              {trend > 0 ? "↗" : (trend < 0 ? "↘" : "→")}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Chart - Takes remaining space */}
+      <div className="flex-1 min-h-0">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart
+            data={chartData}
+            margin={{
+              top: 5,
+              right: 15,
+              left: 15,
+              bottom: 5,
+            }}
+          >
+            <CartesianGrid
+              strokeDasharray="3 3"
+              stroke="rgba(120, 120, 120, 0.2)"
+            />
+            <XAxis
+              dataKey="month"
+              stroke="currentColor"
+              tick={{ fill: 'currentColor', fontSize: 11 }}
+            />
+            <YAxis
+              tickFormatter={formatCurrency}
+              domain={['auto', 'auto']}
+              stroke="currentColor"
+              tick={{ fill: 'currentColor', fontSize: 11 }}
+            />
+            <Tooltip
+              contentStyle={{
+                backgroundColor: "rgba(255, 255, 255, 0.95)",
+                borderRadius: "6px",
+                border: "none",
+                padding: "8px",
+                boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                color: "#000",
+                fontSize: "12px"
               }}
-            >
-              <CartesianGrid 
-                strokeDasharray="3 3" 
-                stroke="rgba(120, 120, 120, 0.2)" 
-              />
-              <XAxis 
-                dataKey="month" 
-                stroke="currentColor" 
-                tick={{ fill: 'currentColor' }}
-              />
-              <YAxis
-                tickFormatter={formatCurrency}
-                domain={['auto', 'auto']}
-                stroke="currentColor"
-                tick={{ fill: 'currentColor' }}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "rgba(255, 255, 255, 0.8)",
-                  borderRadius: "6px",
-                  border: "none",
-                  padding: "8px",
-                  boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
-                  color: "#000",
-                }}
-                formatter={(value) => [formatCurrency(value), "Income"]}
-                labelFormatter={(label) => `Month: ${label}`}
-              />
-              <ReferenceLine
-                y={averageIncome}
-                stroke="#666"
-                strokeDasharray="3 3"
-                label={{ value: "Average", position: "right", fill: 'currentColor' }}
-              />
-              <Line
-                type="monotone"
-                dataKey="income"
-                stroke="#2563EB"
-                strokeWidth={2}
-                dot={{ r: 4 }}
-                activeDot={{ r: 8 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+              formatter={(value) => [formatCurrency(value), "Income"]}
+              labelFormatter={(label) => `Month: ${label}`}
+            />
+            <ReferenceLine
+              y={averageIncome}
+              stroke="#666"
+              strokeDasharray="2 2"
+              label={{ value: "Avg", position: "right", fill: 'currentColor', fontSize: 10 }}
+            />
+            <Line
+              type="monotone"
+              dataKey="income"
+              stroke="#10B981"
+              strokeWidth={2.5}
+              dot={{ r: 3, fill: "#10B981" }}
+              activeDot={{ r: 5, fill: "#10B981" }}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Compact Metrics Row */}
+      <div className="grid grid-cols-3 gap-2 pt-2 border-t">
+        <div className="text-center">
+          <div className="text-sm font-semibold">
+            {Number(stabilityScore || 0).toFixed(1)}/10
+          </div>
+          <p className="text-xs text-muted-foreground">Score</p>
+        </div>
+        
+        <div className="text-center">
+          <div className="text-sm font-semibold">
+            ±{((variance || 0) * 100).toFixed(1)}%
+          </div>
+          <p className="text-xs text-muted-foreground">Variance</p>
         </div>
 
-        <div className="mt-4 space-y-2 bg-muted/50 dark:bg-gray-700/50 rounded-lg p-4">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium">Stability Score</span>
-            <span 
-              className="text-sm font-semibold"
-              style={{ color: calculateTrendColor(trend) }}
-            >
-              {(stabilityScore / 10).toFixed(1)}/10
-            </span>
+        <div className="text-center">
+          <div className="text-sm font-semibold">
+            {formatCurrency(averageIncome)}
           </div>
-          
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium">Monthly Variance</span>
-            <span className="text-sm text-muted-foreground">
-              ±{((variance || 0) * 100).toFixed(1)}%
-            </span>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium">Trend</span>
-            <span 
-              className="text-sm font-semibold"
-              style={{ color: calculateTrendColor(trend) }}
-            >
-              {trend > 0 ? "Increasing" : (trend < 0 ? "Decreasing" : "Stable")}
-            </span>
-          </div>
+          <p className="text-xs text-muted-foreground">Avg Income</p>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

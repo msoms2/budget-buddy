@@ -15,6 +15,48 @@ class GoalController extends Controller
 {
     public function index(Request $request)
     {
+        // Get expense categories (main and sub)
+        $expenseCategories = ExpenseCategory::where('user_id', Auth::id())
+            ->orderBy('name')
+            ->get();
+        
+        // Get income categories (main and sub)
+        $earningCategories = \App\Models\EarningCategory::where('user_id', Auth::id())
+            ->orderBy('name')
+            ->get();
+
+        // Organize categories into required format
+        $mainCategories = collect([])
+            ->concat($expenseCategories->whereNull('parent_id')->map(function($cat) {
+                $cat->type = 'expense';
+                return $cat;
+            }))
+            ->concat($earningCategories->whereNull('parent_id')->map(function($cat) {
+                $cat->type = 'income';
+                return $cat;
+            }))
+            ->sortBy('name')
+            ->values();
+
+        // Organize subcategories by parent
+        $subcategories = [];
+        
+        // Add expense subcategories
+        foreach($expenseCategories->whereNotNull('parent_id') as $sub) {
+            if (!isset($subcategories[$sub->parent_id])) {
+                $subcategories[$sub->parent_id] = [];
+            }
+            $subcategories[$sub->parent_id][] = $sub;
+        }
+        
+        // Add income subcategories
+        foreach($earningCategories->whereNotNull('parent_id') as $sub) {
+            if (!isset($subcategories[$sub->parent_id])) {
+                $subcategories[$sub->parent_id] = [];
+            }
+            $subcategories[$sub->parent_id][] = $sub;
+        }
+
         $goals = Goal::query()
             ->where('user_id', Auth::id())
             ->when($request->status, function ($query, $status) {
@@ -27,23 +69,55 @@ class GoalController extends Controller
             ->get();
 
         return Inertia::render('Goals/Index', [
-            'goals' => $goals
+            'goals' => $goals,
+            'mainCategories' => $mainCategories,
+            'subcategories' => $subcategories
         ]);
     }
 
     public function create()
     {
-        // Get main categories first
-        $mainCategories = \App\Models\Category::where('user_id', Auth::id())
+        // Get expense categories (main and sub)
+        $expenseCategories = ExpenseCategory::where('user_id', Auth::id())
             ->orderBy('name')
             ->get();
         
-        // Get subcategories (expense categories) organized by parent
-        $subcategories = ExpenseCategory::where('user_id', Auth::id())
-            ->with('parentCategory') // Make sure this relationship exists
+        // Get income categories (main and sub)
+        $earningCategories = \App\Models\EarningCategory::where('user_id', Auth::id())
             ->orderBy('name')
-            ->get()
-            ->groupBy('category_id');
+            ->get();
+
+        // Organize categories into required format
+        $mainCategories = collect([])
+            ->concat($expenseCategories->whereNull('parent_id')->map(function($cat) {
+                $cat->type = 'expense';
+                return $cat;
+            }))
+            ->concat($earningCategories->whereNull('parent_id')->map(function($cat) {
+                $cat->type = 'income';
+                return $cat;
+            }))
+            ->sortBy('name')
+            ->values();
+
+        // Organize subcategories by parent
+        $subcategories = [];
+        
+        // Add expense subcategories
+        foreach($expenseCategories->whereNotNull('parent_id') as $sub) {
+            if (!isset($subcategories[$sub->parent_id])) {
+                $subcategories[$sub->parent_id] = [];
+            }
+            $subcategories[$sub->parent_id][] = $sub;
+        }
+        
+        // Add income subcategories
+        foreach($earningCategories->whereNotNull('parent_id') as $sub) {
+            if (!isset($subcategories[$sub->parent_id])) {
+                $subcategories[$sub->parent_id] = [];
+            }
+            $subcategories[$sub->parent_id][] = $sub;
+        }
         
         return Inertia::render('Goals/Create', [
             'mainCategories' => $mainCategories,
@@ -133,17 +207,47 @@ class GoalController extends Controller
     {
         Gate::authorize('view', $goal);
         
-        // Get main categories first
-        $mainCategories = \App\Models\Category::where('user_id', Auth::id())
+        // Get expense categories (main and sub)
+        $expenseCategories = ExpenseCategory::where('user_id', Auth::id())
             ->orderBy('name')
             ->get();
-    
-        // Get subcategories (expense categories) organized by parent
-        $subcategories = ExpenseCategory::where('user_id', Auth::id())
-            ->with('parentCategory')
+        
+        // Get income categories (main and sub)
+        $earningCategories = \App\Models\EarningCategory::where('user_id', Auth::id())
             ->orderBy('name')
-            ->get()
-            ->groupBy('category_id');
+            ->get();
+
+        // Organize categories into required format
+        $mainCategories = collect([])
+            ->concat($expenseCategories->whereNull('parent_id')->map(function($cat) {
+                $cat->type = 'expense';
+                return $cat;
+            }))
+            ->concat($earningCategories->whereNull('parent_id')->map(function($cat) {
+                $cat->type = 'income';
+                return $cat;
+            }))
+            ->sortBy('name')
+            ->values();
+
+        // Organize subcategories by parent
+        $subcategories = [];
+        
+        // Add expense subcategories
+        foreach($expenseCategories->whereNotNull('parent_id') as $sub) {
+            if (!isset($subcategories[$sub->parent_id])) {
+                $subcategories[$sub->parent_id] = [];
+            }
+            $subcategories[$sub->parent_id][] = $sub;
+        }
+        
+        // Add income subcategories
+        foreach($earningCategories->whereNotNull('parent_id') as $sub) {
+            if (!isset($subcategories[$sub->parent_id])) {
+                $subcategories[$sub->parent_id] = [];
+            }
+            $subcategories[$sub->parent_id][] = $sub;
+        }
     
         $transactions = $goal->transactions()
             ->orderBy('transaction_date', 'desc')

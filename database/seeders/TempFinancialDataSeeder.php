@@ -13,8 +13,11 @@ use App\Models\ExpenseCategory;
 use App\Models\EarningCategory;
 use Carbon\Carbon;
 
-class FinancialDataSeeder extends Seeder
+class TempFinancialDataSeeder extends Seeder
 {
+    /**
+     * Run the database seeds.
+     */
     public function run(): void
     {
         // Use only the admin user instead of all users to reduce the amount of data

@@ -11,19 +11,18 @@ class CurrencyAndPaymentSeeder extends Seeder
 {
     public function run(): void
     {
-        // Create main currencies with specific rates
-        Currency::factory()->usd()->create(); // Base currency with rate 1.0
-        Currency::factory()->eur()->create(); // EUR with defined rate
+        // Skip currency creation as it's already handled by CurrencySeeder
+        // Just ensure we have the needed currencies by checking if they exist
         
-        Currency::factory()->create([ // GBP
-            'code'          => 'GBP',
-            'name'          => 'British Pound',
-            'symbol'        => '£',
-            'exchange_rate' => 1.25, // Example rate relative to USD
-        ]);
-
         // Find or create admin user for payment methods
-        $admin = User::where('email', 'admin@example.com')->first();
+        $admin = User::firstOrCreate(
+            ['email' => 'admin@example.com'],
+            [
+                'name' => 'Admin User',
+                'password' => bcrypt('password'),
+                'email_verified_at' => now(),
+            ]
+        );
 
         // Create common payment methods
         $paymentMethods = [

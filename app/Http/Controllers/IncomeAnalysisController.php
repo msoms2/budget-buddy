@@ -27,7 +27,7 @@ class IncomeAnalysisController extends Controller
             return response()->json(new IncomeAnalysisResource($analysis));
         }
         
-        return Inertia::render('Statistics/IncomeAnalysis', [
+        return Inertia::render('IncomeAnalysis/Index', [
             'incomeAnalysis' => new IncomeAnalysisResource($analysis)
         ]);
     }

@@ -174,11 +174,13 @@ Route::get('/dashboard', function () {
         GROUP BY ec.id, ec.name
     ", [Auth::id(), $startOfMonth, $endOfMonth]);
 
-    // Get active budgets
+    // Get top 3 active budgets
     $budgets = \App\Models\Budget::where('budgets.user_id', Auth::id())
         ->where('budgets.start_date', '<=', now())
         ->where('budgets.end_date', '>=', now())
         ->with(['category', 'currency'])
+        ->orderBy('created_at', 'desc')
+        ->take(3)
         ->get()
         ->map(function($budget) {
             $utilization = $budget->calculateUtilization();
@@ -535,7 +537,7 @@ Route::middleware('auth')->group(function () {
 
     // Admin routes
     Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
-        Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
+        Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('index');
         Route::get('/users', [AdminController::class, 'users'])->name('users');
         Route::get('/users/{id}', [AdminController::class, 'showUser'])->name('users.show');
         Route::get('/transactions', [AdminController::class, 'transactions'])->name('transactions');

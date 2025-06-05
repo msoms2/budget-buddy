@@ -16,6 +16,21 @@ class BudgetFactory extends Factory
         $startDate = $this->faker->dateTimeBetween('now', '+2 months');
         $endDate = $this->faker->dateTimeBetween($startDate, '+1 year');
         
+        // Try to get the default USD currency, fallback to creating one if it doesn't exist
+        $currency = \App\Models\Currency::where('code', 'USD')->first();
+        if (!$currency) {
+            // Create a currency directly rather than using factory
+            $currency = \App\Models\Currency::create([
+                'code' => 'USD',
+                'name' => 'US Dollar',
+                'symbol' => '$',
+                'exchange_rate' => 1.0000,
+                'format' => '$#,##0.00',
+                'decimal_places' => 2,
+                'is_default' => true,
+            ]);
+        }
+        
         return [
             'name' => $this->faker->words(2, true) . ' Budget',
             'amount' => $this->faker->numberBetween(100, 5000),
@@ -25,6 +40,7 @@ class BudgetFactory extends Factory
             'next_renewal_date' => null,
             'category_id' => ExpenseCategory::factory(),
             'user_id' => User::factory(),
+            'currency_id' => $currency->id,
             'notes' => $this->faker->optional(0.7)->sentence(),
             'rollover_enabled' => $this->faker->boolean(20),
             'rollover_amount' => 0,

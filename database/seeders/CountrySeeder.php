@@ -3,65 +3,61 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use App\Models\Country;
-use App\Models\Currency;
+use Illuminate\Support\Facades\DB;
 
 class CountrySeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        // Get currencies that we'll need
-        $usd = Currency::where('code', 'USD')->first();
-        $eur = Currency::where('code', 'EUR')->first();
-        $gbp = Currency::where('code', 'GBP')->first();
-
-        // Only seed if we have the basic currencies and no countries exist yet
-        if (!$usd || !$eur || !$gbp || Country::count() > 0) {
-            return;
-        }
-
-        // Define countries with their currency mappings
         $countries = [
-            // English-speaking countries with USD
-            ['name' => 'United States', 'code' => 'US', 'currency_id' => $usd->id],
+            // North America
+            ['name' => 'United States', 'code' => 'US', 'currency_code' => 'USD', 'flag_emoji' => '🇺🇸'],
+            ['name' => 'Canada', 'code' => 'CA', 'currency_code' => 'CAD', 'flag_emoji' => '🇨🇦'],
             
-            // United Kingdom with GBP
-            ['name' => 'United Kingdom', 'code' => 'GB', 'currency_id' => $gbp->id],
+            // Europe
+            ['name' => 'United Kingdom', 'code' => 'GB', 'currency_code' => 'GBP', 'flag_emoji' => '🇬🇧'],
+            ['name' => 'Germany', 'code' => 'DE', 'currency_code' => 'EUR', 'flag_emoji' => '🇩🇪'],
+            ['name' => 'France', 'code' => 'FR', 'currency_code' => 'EUR', 'flag_emoji' => '🇫🇷'],
+            ['name' => 'Italy', 'code' => 'IT', 'currency_code' => 'EUR', 'flag_emoji' => '🇮🇹'],
+            ['name' => 'Spain', 'code' => 'ES', 'currency_code' => 'EUR', 'flag_emoji' => '🇪🇸'],
+            ['name' => 'Switzerland', 'code' => 'CH', 'currency_code' => 'CHF', 'flag_emoji' => '🇨🇭'],
             
-            // Major European countries with EUR
-            ['name' => 'Germany', 'code' => 'DE', 'currency_id' => $eur->id],
-            ['name' => 'France', 'code' => 'FR', 'currency_id' => $eur->id],
-            ['name' => 'Italy', 'code' => 'IT', 'currency_id' => $eur->id],
-            ['name' => 'Spain', 'code' => 'ES', 'currency_id' => $eur->id],
-            ['name' => 'Netherlands', 'code' => 'NL', 'currency_id' => $eur->id],
-            ['name' => 'Belgium', 'code' => 'BE', 'currency_id' => $eur->id],
-            ['name' => 'Austria', 'code' => 'AT', 'currency_id' => $eur->id],
-            ['name' => 'Portugal', 'code' => 'PT', 'currency_id' => $eur->id],
-            ['name' => 'Ireland', 'code' => 'IE', 'currency_id' => $eur->id],
-            ['name' => 'Finland', 'code' => 'FI', 'currency_id' => $eur->id],
-            ['name' => 'Greece', 'code' => 'GR', 'currency_id' => $eur->id],
+            // Asia
+            ['name' => 'Japan', 'code' => 'JP', 'currency_code' => 'JPY', 'flag_emoji' => '🇯🇵'],
+            ['name' => 'China', 'code' => 'CN', 'currency_code' => 'CNY', 'flag_emoji' => '🇨🇳'],
+            ['name' => 'India', 'code' => 'IN', 'currency_code' => 'INR', 'flag_emoji' => '🇮🇳'],
             
-            // Other English-speaking countries with USD (for simplicity)
-            ['name' => 'Canada', 'code' => 'CA', 'currency_id' => $usd->id],
-            ['name' => 'Australia', 'code' => 'AU', 'currency_id' => $usd->id],
-            ['name' => 'New Zealand', 'code' => 'NZ', 'currency_id' => $usd->id],
+            // Oceania
+            ['name' => 'Australia', 'code' => 'AU', 'currency_code' => 'AUD', 'flag_emoji' => '🇦🇺'],
             
-            // Other major countries (using USD as default for simplicity)
-            ['name' => 'Japan', 'code' => 'JP', 'currency_id' => $usd->id],
-            ['name' => 'South Korea', 'code' => 'KR', 'currency_id' => $usd->id],
-            ['name' => 'Singapore', 'code' => 'SG', 'currency_id' => $usd->id],
-            ['name' => 'Switzerland', 'code' => 'CH', 'currency_id' => $usd->id],
-            ['name' => 'Norway', 'code' => 'NO', 'currency_id' => $usd->id],
-            ['name' => 'Sweden', 'code' => 'SE', 'currency_id' => $usd->id],
-            ['name' => 'Denmark', 'code' => 'DK', 'currency_id' => $usd->id],
+            // Add more European countries with EUR
+            ['name' => 'Netherlands', 'code' => 'NL', 'currency_code' => 'EUR', 'flag_emoji' => '🇳🇱'],
+            ['name' => 'Belgium', 'code' => 'BE', 'currency_code' => 'EUR', 'flag_emoji' => '🇧🇪'],
+            ['name' => 'Austria', 'code' => 'AT', 'currency_code' => 'EUR', 'flag_emoji' => '🇦🇹'],
+            ['name' => 'Ireland', 'code' => 'IE', 'currency_code' => 'EUR', 'flag_emoji' => '🇮🇪'],
+            ['name' => 'Portugal', 'code' => 'PT', 'currency_code' => 'EUR', 'flag_emoji' => '🇵🇹'],
+            ['name' => 'Greece', 'code' => 'GR', 'currency_code' => 'EUR', 'flag_emoji' => '🇬🇷'],
+            ['name' => 'Finland', 'code' => 'FI', 'currency_code' => 'EUR', 'flag_emoji' => '🇫🇮'],
         ];
 
-        // Create countries
         foreach ($countries as $country) {
-            Country::create($country);
+            // Get the currency ID for this country
+            $currency = DB::table('currencies')
+                         ->where('code', $country['currency_code'])
+                         ->first();
+
+            if ($currency) {
+                $countryData = [
+                    'name' => $country['name'],
+                    'code' => $country['code'],
+                    'currency_code' => $country['currency_code'],
+                    'currency_id' => $currency->id,
+                    'flag_emoji' => $country['flag_emoji'],
+                    'is_active' => true,
+                ];
+
+                DB::table('countries')->insertOrIgnore($countryData);
+            }
         }
     }
 }

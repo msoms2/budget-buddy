@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Head } from "@inertiajs/react";
+import { useCurrency } from "@/hooks/useCurrency";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -64,7 +65,7 @@ export default function Index({ auth }) {
         setIsLoading(true);
         setError(null);
         
-        const response = await axios.get('/income-analysis', {
+        const response = await axios.get('/statistics/income-analysis', {
           headers: {
             'Accept': 'application/json',
             'Content-Type': 'application/json',
@@ -366,7 +367,7 @@ export default function Index({ auth }) {
                         </CardDescription>
                       </CardHeader>
                       <CardContent className="p-6">
-                        <div className="h-[350px] flex items-center justify-center">
+                        <div className="h-[350px]">
                           {isLoading ? (
                             <div className="space-y-4 w-full">
                               <Skeleton className="h-8 w-32 mx-auto" />
@@ -397,7 +398,7 @@ export default function Index({ auth }) {
                         </CardDescription>
                       </CardHeader>
                       <CardContent className="p-6">
-                        <div className="h-[350px] flex items-center justify-center">
+                        <div className="h-[350px]">
                           {isLoading ? (
                             <div className="space-y-4 w-full">
                               <Skeleton className="h-8 w-32 mx-auto" />

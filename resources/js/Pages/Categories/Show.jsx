@@ -5,6 +5,7 @@ import DeleteConfirmationModal from '@/components/DeleteConfirmationModal';
 import CategorySheet from './Partials/CategorySheet';
 import { AppSidebar } from "@/components/app-sidebar";
 import { AddTransactionButton } from "@/components/add-transaction-button";
+import { useTransactionSheet } from '@/hooks/use-transaction-sheet';
 import {
     Breadcrumb,
     BreadcrumbItem,
@@ -46,7 +47,7 @@ import {
     PaginationNext, 
     PaginationPrevious 
 } from '@/components/ui/pagination';
-export default function Show({ auth, category, transactions, allTransactionsData, type, subcategories = [] }) {
+export default function Show({ auth, category, transactions, allTransactionsData, type, subcategories = [], currencies = [], paymentMethods = [] }) {
     // State for delete confirmation modal
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [transactionToDelete, setTransactionToDelete] = useState(null);
@@ -55,6 +56,9 @@ export default function Show({ auth, category, transactions, allTransactionsData
     // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
     const transactionsPerPage = 10;
+    
+    // Transaction sheet hook
+    const { sheet, transactionSheet } = useTransactionSheet();
     
     // Safely handle different data structures
     const totalAmount = allTransactionsData?.total || 0;
@@ -592,26 +596,32 @@ export default function Show({ auth, category, transactions, allTransactionsData
                                         Listing all {isExpense ? 'expenses' : 'income'} in the {category.name} category
                                     </CardDescription>
                                 </div>
-                                <AddTransactionButton
-                                    transactionType={isExpense ? 'expense' : 'earning'}
-                                    categories={[category]}
-                                    initialCategory={category.id}
+                                <Button
                                     size="sm"
-                                    variant="default"
-                                    sourcePage="category"
-                                    onSuccess={() => {
-                                        router.reload({
-                                            preserveScroll: true,
-                                            preserveState: true
-                                        });
-                                    }}
                                     className={`gap-2 ${isExpense
                                         ? 'bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600'
                                         : 'bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600'
                                     } text-white`}
+                                    onClick={() => {
+                                        sheet.show({
+                                            type: isExpense ? 'expense' : 'earning',
+                                            categories: [category],
+                                            initialCategory: category.id,
+                                            sourcePage: 'category',
+                                            currencies: currencies,
+                                            paymentMethods: paymentMethods,
+                                            onSuccess: () => {
+                                                router.reload({
+                                                    preserveScroll: true,
+                                                    preserveState: true
+                                                });
+                                            }
+                                        });
+                                    }}
                                 >
+                                    <PlusIcon className="h-4 w-4" />
                                     Add {isExpense ? 'Expense' : 'Income'}
-                                </AddTransactionButton>
+                                </Button>
                             </div>
                         </CardHeader>
 
@@ -626,15 +636,31 @@ export default function Show({ auth, category, transactions, allTransactionsData
                                         You haven't added any {isExpense ? 'expenses' : 'income'} to this category yet. 
                                         Start tracking your finances by adding your first transaction.
                                     </p>
-                                    <AddTransactionButton 
-                                        transactionType={isExpense ? 'expense' : 'earning'}
-                                        categories={[category]}
-                                        initialCategory={category.id}
-                                        sourcePage="category"
-                                        onSuccess={() => router.reload()}
+                                    <Button
+                                        className={`gap-2 ${isExpense
+                                            ? 'bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600'
+                                            : 'bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600'
+                                        } text-white`}
+                                        onClick={() => {
+                                            sheet.show({
+                                                type: isExpense ? 'expense' : 'earning',
+                                                categories: [category],
+                                                initialCategory: category.id,
+                                                sourcePage: 'category',
+                                                currencies: currencies,
+                                                paymentMethods: paymentMethods,
+                                                onSuccess: () => {
+                                                    router.reload({
+                                                        preserveScroll: true,
+                                                        preserveState: true
+                                                    });
+                                                }
+                                            });
+                                        }}
                                     >
+                                        <PlusIcon className="h-4 w-4" />
                                         Add Your First {isExpense ? 'Expense' : 'Income'}
-                                    </AddTransactionButton>
+                                    </Button>
                                 </div>
                             ) : (
                                 <div>
@@ -840,8 +866,9 @@ export default function Show({ auth, category, transactions, allTransactionsData
                 category={category}
                 categoryType={type}
             />
-            {/* The AddTransactionButton component handles the transaction sheet internally */}
             
+            {/* Transaction Sheet */}
+            {transactionSheet}
             
         </SidebarProvider>
     );

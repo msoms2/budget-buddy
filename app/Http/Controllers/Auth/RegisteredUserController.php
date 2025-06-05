@@ -62,6 +62,11 @@ class RegisteredUserController extends Controller
             'displayed_currencies' => [$country->currency->code],
         ]);
 
+        // Save initial password to password history
+        $user->passwordHistory()->create([
+            'password' => $user->password, // Store the hashed password
+        ]);
+
         \Illuminate\Support\Facades\Log::info('User created in RegisteredUserController:', ['user_id' => $user->id, 'displayed_currencies' => $user->displayed_currencies]);
 
         event(new Registered($user));

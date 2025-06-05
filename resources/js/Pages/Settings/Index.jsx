@@ -101,6 +101,7 @@ export default function Index({ auth, settings, options, flash }) {
             transactions: settings.sidebarItems?.transactions ?? true,
             budgets: settings.sidebarItems?.budgets ?? true,
             goals: settings.sidebarItems?.goals ?? true,
+            savings: settings.sidebarItems?.savings ?? true,
             debtManagement: settings.sidebarItems?.debtManagement ?? true,
             investments: settings.sidebarItems?.investments ?? true,
             reports: settings.sidebarItems?.reports ?? true,

@@ -56,6 +56,7 @@ export default function Display({ data, setData, processing, handleSubmit }) {
                             { id: 'transactions', label: 'Transactions', icon: CreditCard, description: 'All financial transactions' },
                             { id: 'budgets', label: 'Budgets', icon: DollarSign, description: 'Budget planning and tracking' },
                             { id: 'goals', label: 'Goals', icon: Target, description: 'Financial goals and targets' },
+                            { id: 'savings', label: 'Savings', icon: DollarSign, description: 'Savings accounts and tracking' },
                             { id: 'debtManagement', label: 'Debt Management', icon: CreditCard, description: 'Debt tracking and management' },
                             { id: 'investments', label: 'Investments', icon: TrendingUp, description: 'Investment portfolio' },
                             { id: 'reports', label: 'Reports', icon: FileText, description: 'Financial reports and exports' }

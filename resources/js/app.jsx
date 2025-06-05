@@ -1,49 +1,37 @@
+import './bootstrap';
+import '../css/app.css';
+
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { createInertiaApp } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
-
-import '../css/app.css';
-import './bootstrap';
-import { ToastProvider } from '@/components/ui/toast';
-import { ThemeProvider } from '@/components/theme/theme-provider';
 import { CurrencyProvider } from '@/hooks/useCurrency.jsx';
+import { ThemeProvider } from '@/components/theme/theme-provider';
 
-const appName = 'Budget Buddy';
-
-// Add CSRF token validation to ensure it's properly loaded
-document.addEventListener('DOMContentLoaded', () => {
-    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-    if (!token) {
-        console.error('CSRF token missing! Authentication may fail.');
-    } else {
-        console.log('CSRF token loaded successfully');
-    }
-});
+const appName = import.meta.env.VITE_APP_NAME || 'Budget Buddy';
 
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,
-    resolve: (name) => {
-        // Try to resolve the component with .jsx extension first, then fall back to .tsx
-        const pages = import.meta.glob('./Pages/**/*.{jsx,tsx}');
-        return resolvePageComponent(
-            `./Pages/${name}.jsx`,
-            pages,
-        );
-    },
+    resolve: (name) => resolvePageComponent(`./Pages/${name}.jsx`, import.meta.glob('./Pages/**/*.jsx')),
     setup({ el, App, props }) {
         const root = createRoot(el);
-
-        root.render(
+        return root.render(
             <ThemeProvider>
                 <CurrencyProvider>
                     <App {...props} />
-                    <ToastProvider />
                 </CurrencyProvider>
             </ThemeProvider>
         );
     },
     progress: {
         color: '#4B5563',
+    },
+    onError: (error) => {
+        // If it's a CSRF token mismatch error (419)
+        if (error.response && error.response.status === 419) {
+            // Reload the page to get a fresh CSRF token
+            window.location.reload();
+            return false; // Prevent default error handling
+        }
     },
 });

@@ -99,18 +99,18 @@ export default function Appearance({ data, setData, processing, handleSubmit, ha
                 <Separator />
 
                 {/* Font Settings */}
-                <div className="space-y-3">
+                <div className="space-y-3 opacity-50">
                     <div className="flex items-center gap-2">
                         <FolderIcon className="h-5 w-5 text-muted-foreground" />
-                        <h4 className="font-medium">Typography</h4>
+                        <h4 className="font-medium text-muted-foreground">Typography</h4>
                     </div>
                     <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
                         <div>
-                            <p className="font-medium text-sm">Font Family</p>
+                            <p className="font-medium text-sm text-muted-foreground">Font Family</p>
                             <p className="text-xs text-muted-foreground">Choose your preferred font</p>
                         </div>
-                        <Select defaultValue="inter">
-                            <SelectTrigger className="w-32">
+                        <Select defaultValue="inter" disabled>
+                            <SelectTrigger className="w-32 cursor-not-allowed">
                                 <SelectValue placeholder="Select font" />
                             </SelectTrigger>
                             <SelectContent>

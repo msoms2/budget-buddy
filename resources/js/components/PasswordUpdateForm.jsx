@@ -12,7 +12,7 @@ export default function PasswordUpdateForm() {
     const [showPassword, setShowPassword] = useState(false);
     const [showNewPassword, setShowNewPassword] = useState(false);
     
-    const { data, setData, post, processing, errors, reset } = useForm({
+    const { data, setData, put, processing, errors, reset } = useForm({
         current_password: '',
         password: '',
         password_confirmation: ''
@@ -28,14 +28,23 @@ export default function PasswordUpdateForm() {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        post(route('password.update'), {
+        
+        // Add explicit method override for debugging
+        put(route('password.update'), {
             preserveScroll: true,
+            forceFormData: true,
+            onBefore: () => {
+                console.log('Submitting password update form with PUT method');
+            },
             onSuccess: () => {
                 reset('current_password', 'password', 'password_confirmation');
                 toast({
                     title: 'Password Updated',
                     description: 'Your password has been successfully changed.',
                 });
+            },
+            onError: (errors) => {
+                console.error('Password update error:', errors);
             },
         });
     };
@@ -57,6 +66,12 @@ export default function PasswordUpdateForm() {
             </CardHeader>
             <form onSubmit={handleSubmit}>
                 <CardContent className="space-y-4">
+                    {/* Password Policy Information */}
+                    <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                        <p className="text-sm text-blue-800 dark:text-blue-200">
+                            <strong>Password Policy:</strong> You cannot reuse your current password or any of your last 3 passwords for security reasons.
+                        </p>
+                    </div>
                     <div className="space-y-2">
                         <Label htmlFor="current_password">Current Password</Label>
                         <div className="relative">
@@ -107,7 +122,15 @@ export default function PasswordUpdateForm() {
                             </button>
                         </div>
                         {errors.password && (
-                            <p className="text-sm text-red-500 mt-1">{errors.password}</p>
+                            <div className="space-y-1 mt-1">
+                                {Array.isArray(errors.password) ? (
+                                    errors.password.map((error, index) => (
+                                        <p key={index} className="text-sm text-red-500">{error}</p>
+                                    ))
+                                ) : (
+                                    <p className="text-sm text-red-500">{errors.password}</p>
+                                )}
+                            </div>
                         )}
                     </div>
 

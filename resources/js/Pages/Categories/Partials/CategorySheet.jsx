@@ -205,9 +205,11 @@ export default function CategorySheet({ isOpen, onClose, category = null, catego
     const badgeBg = data.type === 'expense' ? 'bg-red-50 text-red-600 border-red-200' : 'bg-green-50 text-green-600 border-green-200';
     const buttonColor = data.type === 'expense' ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700';
 
-    // Get filtered parent categories based on current type
-    const filteredParentCategories = parentCategories.filter(cat => 
-        cat.type === data.type && (!category || cat.id !== category.id)
+    // Get filtered parent categories based on current type (excluding subcategories)
+    const filteredParentCategories = parentCategories.filter(cat =>
+        cat.type === data.type &&
+        (!category || cat.id !== category.id) &&
+        !cat.parent_id
     );
 
     return (

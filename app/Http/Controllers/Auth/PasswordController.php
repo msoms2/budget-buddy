@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\PasswordHistory;
+use App\Rules\NotInPasswordHistory;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -17,43 +18,34 @@ class PasswordController extends Controller
      */
     public function update(Request $request): RedirectResponse
     {
+        $user = $request->user();
+        
         $validated = $request->validate([
             'current_password' => ['required', 'current_password'],
-            'password' => ['required', Password::defaults(), 'confirmed'],
+            'password' => [
+                'required',
+                Password::defaults(),
+                'confirmed',
+                new NotInPasswordHistory($user, 3)
+            ],
         ]);
 
-        $user = $request->user();
         $newPassword = $validated['password'];
 
-        // Check if password exists in last 3 password history
-        $recentPasswords = $user->passwordHistory()
-            ->latest()
-            ->take(3)
-            ->get();
-
-        foreach ($recentPasswords as $historicalPassword) {
-            if (Hash::check($newPassword, $historicalPassword->password)) {
-                throw ValidationException::withMessages([
-                    'password' => ['You cannot reuse any of your last 3 passwords.'],
-                ]);
-            }
-        }
+        // Store current password in history before updating
+        $user->passwordHistory()->create([
+            'password' => $user->password, // Store the current (old) password
+        ]);
 
         // Update password
         $user->update([
             'password' => Hash::make($newPassword),
         ]);
 
-        // Store in password history
-        $user->passwordHistory()->create([
-            'password' => Hash::make($newPassword),
-        ]);
-
-        // Keep only last 3 passwords in history
+        // Keep only last 3 passwords in history (not including current)
         $user->passwordHistory()
             ->latest()
             ->skip(3)
-            ->take(PHP_INT_MAX)
             ->delete();
 
         return back();

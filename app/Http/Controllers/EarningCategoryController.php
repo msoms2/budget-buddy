@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\EarningCategory;
+use App\Models\Currency;
+use App\Models\PaymentMethod;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -83,10 +85,16 @@ class EarningCategoryController extends Controller
             $subcategories = $earningCategory->subcategories;
         }
         
+        // Get currencies and payment methods for the transaction form
+        $currencies = Currency::where('is_active', true)->get();
+        $paymentMethods = PaymentMethod::where('user_id', Auth::id())->get();
+
         return Inertia::render('EarningCategories/Show', [
             'category' => $earningCategory,
             'earnings' => $earnings,
-            'subcategories' => $subcategories
+            'subcategories' => $subcategories,
+            'currencies' => $currencies,
+            'paymentMethods' => $paymentMethods
         ]);
     }
 

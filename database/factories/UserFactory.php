@@ -21,8 +21,20 @@ class UserFactory extends Factory
             'remember_token' => Str::random(10),
             'email_verified_at' => now(),
             'currency_id' => function () {
-                return Currency::where('is_default', true)->first()?->id ?? 
-                       Currency::factory()->usd()->create()->id;
+                $currency = Currency::where('is_default', true)->first();
+                if (!$currency) {
+                    // Create a currency directly rather than using factory
+                    $currency = Currency::create([
+                        'code' => 'USD',
+                        'name' => 'US Dollar',
+                        'symbol' => '$',
+                        'exchange_rate' => 1.0000,
+                        'format' => '$#,##0.00',
+                        'decimal_places' => 2,
+                        'is_default' => true,
+                    ]);
+                }
+                return $currency->id;
             },
         ];
     }

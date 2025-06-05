@@ -28,13 +28,22 @@ import { useCurrency } from '@/hooks/useCurrency.jsx';
 
 export default function SavingsModal({ isOpen, onClose, savings = null, categories = [] }) {
     const { currency } = useCurrency();
+
+    // Transform categories into a flat list for display
+    const flattenedCategories = categories.map(category => ({
+        id: category.id,
+        name: category.name,
+        icon: category.icon || '💰',
+        icon_color: category.icon_color || '#000000',
+        bg_color: category.bg_color || '#ffffff'
+    }));
     
     // Initialize form with existing data if editing, otherwise use defaults
     const { data, setData, post, put, processing, errors, reset } = useForm({
         name: savings?.name || '',
         target_amount: savings?.target_amount || '',
         target_date: savings?.target_date || '',
-        category: savings?.category || '',
+        category_id: savings?.category_id || '',
         description: savings?.description || '',
         current_amount: savings?.current_amount || 0
     });
@@ -46,7 +55,7 @@ export default function SavingsModal({ isOpen, onClose, savings = null, categori
                 name: savings.name || '',
                 target_amount: savings.target_amount || '',
                 target_date: savings.target_date || '',
-                category: savings.category || '',
+                category_id: savings.category_id || '',
                 description: savings.description || '',
                 current_amount: savings.current_amount || 0
             });
@@ -55,7 +64,7 @@ export default function SavingsModal({ isOpen, onClose, savings = null, categori
                 name: '',
                 target_amount: '',
                 target_date: '',
-                category: '',
+                category_id: '',
                 description: '',
                 current_amount: 0
             });
@@ -70,8 +79,8 @@ export default function SavingsModal({ isOpen, onClose, savings = null, categori
         const formData = { ...data };
         
         // Convert empty strings to null for optional fields
-        if (!formData.category || formData.category === '') {
-            formData.category = null;
+        if (!formData.category_id || formData.category_id === '') {
+            formData.category_id = null;
         }
         
         if (savings) {
@@ -94,23 +103,6 @@ export default function SavingsModal({ isOpen, onClose, savings = null, categori
             });
         }
     };
-
-    // Predefined categories for savings plans
-    const savingsCategories = [
-        'Emergency Fund',
-        'Vacation',
-        'Car Purchase',
-        'Home Down Payment',
-        'Education',
-        'Retirement',
-        'Medical Expenses',
-        'Wedding',
-        'Electronics',
-        'Home Improvement',
-        'Investment',
-        'Business',
-        'Other'
-    ];
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
@@ -195,21 +187,24 @@ export default function SavingsModal({ isOpen, onClose, savings = null, categori
                     <div className="space-y-2">
                         <Label htmlFor="category">Category</Label>
                         <Select
-                            value={data.category}
-                            onValueChange={value => setData('category', value)}
+                            value={data.category_id}
+                            onValueChange={value => setData('category_id', value)}
                         >
                             <SelectTrigger>
                                 <SelectValue placeholder="Select a category" />
                             </SelectTrigger>
                             <SelectContent className="max-h-[300px]">
-                                {savingsCategories.map(category => (
-                                    <SelectItem key={category} value={category}>
-                                        {category}
+                                {flattenedCategories.map(category => (
+                                    <SelectItem key={category.id} value={category.id.toString()}>
+                                        <div className="flex items-center gap-2">
+                                            <span style={{ color: category.icon_color }}>{category.icon}</span>
+                                            {category.name}
+                                        </div>
                                     </SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
-                        {errors.category && <p className="text-sm text-red-500">{errors.category}</p>}
+                        {errors.category_id && <p className="text-sm text-red-500">{errors.category_id}</p>}
                     </div>
 
                     {savings && (

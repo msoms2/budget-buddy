@@ -61,11 +61,12 @@ export default function Account({ data, setData, processing, handleSubmit, optio
                                     <Globe className="h-4 w-4" />
                                     Language
                                 </Label>
-                                <Select 
-                                    value={data.language} 
+                                <Select
+                                    value={data.language}
                                     onValueChange={(value) => setData('language', value)}
+                                    disabled
                                 >
-                                    <SelectTrigger id="language" className="transition-all focus:ring-2 focus:ring-green-500/20">
+                                    <SelectTrigger id="language" className="transition-all focus:ring-2 focus:ring-green-500/20 opacity-50 cursor-not-allowed">
                                         <SelectValue placeholder="Select language" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -76,8 +77,8 @@ export default function Account({ data, setData, processing, handleSubmit, optio
                                         ))}
                                     </SelectContent>
                                 </Select>
-                                <p className="text-xs text-muted-foreground">
-                                    Interface language for the application.
+                                <p className="text-xs text-muted-foreground opacity-70">
+                                    Interface language for the application. (Currently disabled)
                                 </p>
                             </div>
 

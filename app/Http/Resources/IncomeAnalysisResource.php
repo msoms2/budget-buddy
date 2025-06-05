@@ -15,7 +15,7 @@ class IncomeAnalysisResource extends JsonResource
         return [
             'diversityScore' => (float)($this['diversityScore'] ?? 0),
             'stabilityScore' => (float)($this['stabilityScore'] ?? 0),
-            'recurringPercentage' => (float)($this['recurringPercentage'] ?? 0) / 100, // Convert to decimal for frontend
+            'recurringPercentage' => (float)($this['recurringPercentage'] ?? 0), // Already calculated as decimal in service
             'trend' => $this['trend'] ?? 'stable',
             'sources' => $this['sources'] ?? [],
             'monthlyData' => $this['monthlyData'] ?? [],

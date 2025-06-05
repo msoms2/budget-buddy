@@ -14,6 +14,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\NotificationSettingController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\EarningController;
+use App\Http\Controllers\Api\SavingsCategoryController;
 
 // All API routes protected by web session authentication with shared session state
 Route::middleware(['web', 'auth'])->group(function () {
@@ -32,6 +33,21 @@ Route::middleware(['web', 'auth'])->group(function () {
             ->name('api.expense-categories.subcategories');
         Route::get('/earning/{category}/subcategories', [EarningCategoryController::class, 'getSubcategories'])
             ->name('api.earning-categories.subcategories');
+    });
+
+    // Savings Categories Routes
+    Route::prefix('savings-categories')->group(function () {
+        Route::get('/', [SavingsCategoryController::class, 'index'])->name('api.savings-categories.index');
+        Route::post('/', [SavingsCategoryController::class, 'store'])->name('api.savings-categories.store');
+        Route::get('/{category}', [SavingsCategoryController::class, 'show'])
+            ->where('category', '[0-9]+')
+            ->name('api.savings-categories.show');
+        Route::put('/{category}', [SavingsCategoryController::class, 'update'])
+            ->where('category', '[0-9]+')
+            ->name('api.savings-categories.update');
+        Route::delete('/{category}', [SavingsCategoryController::class, 'destroy'])
+            ->where('category', '[0-9]+')
+            ->name('api.savings-categories.destroy');
     });
 
     // Expense and Earning routes
@@ -137,7 +153,7 @@ Route::middleware(['web', 'auth'])->group(function () {
     });
 
     // Notification Settings Routes
-    Route::middleware(['web', 'auth'])->prefix('notifications/settings')->group(function () {
+    Route::prefix('notifications/settings')->group(function () {
         Route::get('/', [NotificationSettingController::class, 'index']);
         Route::put('/{notificationType}', [NotificationSettingController::class, 'update']);
     });
