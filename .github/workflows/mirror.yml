@@ -23,9 +23,4 @@ jobs:
           ssh_private_key: ${{ secrets.DEST_REPO_SSH_KEY }}
           
           # The repository to push to.
-          destination_repo: 'git@github.com:21DP1MSoms/budgetbuddy-noslegumadarbs.latest.git'
-          
-          # By default, it pushes the branch that triggered the workflow.
-          # Set to 'true' to push all branches and tags (a true mirror).
-          push_all_branches: 'true'
-          push_all_tags: 'true'
+          target_repo_url: 'git@github.com:21DP1MSoms/budgetbuddy-noslegumadarbs.latest.git'
