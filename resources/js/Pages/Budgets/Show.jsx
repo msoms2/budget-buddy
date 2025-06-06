@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Head, Link } from '@inertiajs/react';
 import { AppSidebar } from "@/components/app-sidebar";
-import { apiFetch } from '@/utils/api.js';
+import { apiFetch } from '@/Utils/api.js';
 import {
   Breadcrumb,
   BreadcrumbItem,
