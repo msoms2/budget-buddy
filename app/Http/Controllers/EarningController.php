@@ -106,7 +106,7 @@ class EarningController extends Controller
             'description' => $validated['description'],
             'amount' => $validated['amount'],
             'category_id' => $validated['category_id'],
-            'subcategory_id' => $validated['subcategory_id'],
+            'subcategory_id' => $validated['subcategory_id'] ?? null,
             'currency_id' => $validated['currency_id'],
             'date' => $validated['date'],
             'is_recurring' => $validated['is_recurring'],

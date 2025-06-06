@@ -50,10 +50,10 @@ class ReportControllerTest extends TestCase
         $response->assertStatus(200)
             ->assertInertia(fn ($assert) => $assert
                 ->component('Reports/Dashboard')
-                ->has('monthlyIncome', 500)
-                ->has('monthlyExpenses', 100)
-                ->has('monthlySavings', 400)
-                ->has('savingsRate', 80.0)
+                ->where('monthlyIncome', 500)
+                ->where('monthlyExpenses', 100)
+                ->where('monthlySavings', 400)
+                ->where('savingsRate', 80)
             );
     }
 

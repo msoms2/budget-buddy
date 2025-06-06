@@ -17,59 +17,63 @@ class NotificationFactory extends Factory
             'user_id' => User::factory(),
             'notification_type_id' => NotificationType::factory(),
             'title' => $this->faker->sentence(4),
-            'message' => $this->faker->paragraph(),
-            'data' => json_encode([
+            'content' => $this->faker->paragraph(2),
+            'data' => [
+                'action_url' => $this->faker->url(),
+                'category' => $this->faker->randomElement(['budget', 'expense', 'income', 'goal']),
                 'amount' => $this->faker->randomFloat(2, 10, 1000),
-                'category' => $this->faker->word(),
-                'date' => $this->faker->date()
-            ]),
-            'is_read' => $this->faker->boolean(20), // 20% chance of being read
-            'read_at' => null,
-            'created_at' => $this->faker->dateTimeBetween('-1 month', 'now'),
-            'updated_at' => now()
+            ],
+            'read_at' => $this->faker->boolean(30) ? $this->faker->dateTimeBetween('-1 week', 'now') : null,
         ];
     }
 
-    public function read(): static
+    public function unread(): self
     {
-        return $this->state(fn (array $attributes) => [
-            'is_read' => true,
-            'read_at' => $this->faker->dateTimeBetween($attributes['created_at'], 'now')
-        ]);
+        return $this->state(function (array $attributes) {
+            return [
+                'read_at' => null,
+            ];
+        });
     }
 
-    public function unread(): static
+    public function read(): self
     {
-        return $this->state(fn (array $attributes) => [
-            'is_read' => false,
-            'read_at' => null
-        ]);
+        return $this->state(function (array $attributes) {
+            return [
+                'read_at' => $this->faker->dateTimeBetween('-1 week', 'now'),
+            ];
+        });
     }
 
-    public function budgetAlert(): static
+    public function budgetLimit(): self
     {
-        return $this->state(fn (array $attributes) => [
-            'title' => 'Budget Limit Alert',
-            'message' => 'Your budget limit has been exceeded',
-            'data' => json_encode([
-                'budget_name' => $this->faker->words(2, true),
-                'current_amount' => $this->faker->randomFloat(2, 500, 1000),
-                'limit_amount' => 500,
-                'percentage' => $this->faker->numberBetween(90, 150)
-            ])
-        ]);
+        return $this->state(function (array $attributes) {
+            return [
+                'title' => 'Budget Limit Warning',
+                'content' => 'You have exceeded your budget limit.',
+                'data' => [
+                    'action_url' => '/budgets',
+                    'category' => 'budget',
+                    'amount' => $this->faker->randomFloat(2, 500, 2000),
+                    'budget_id' => $this->faker->randomNumber(),
+                ],
+            ];
+        });
     }
 
-    public function largeExpense(): static
+    public function largeExpense(): self
     {
-        return $this->state(fn (array $attributes) => [
-            'title' => 'Large Expense Alert',
-            'message' => 'A large expense has been recorded',
-            'data' => json_encode([
-                'amount' => $this->faker->randomFloat(2, 1000, 5000),
-                'category' => $this->faker->word(),
-                'description' => $this->faker->sentence()
-            ])
-        ]);
+        return $this->state(function (array $attributes) {
+            return [
+                'title' => 'Large Expense Alert',
+                'content' => 'A large expense has been recorded.',
+                'data' => [
+                    'action_url' => '/expenses',
+                    'category' => 'expense',
+                    'amount' => $this->faker->randomFloat(2, 1000, 5000),
+                    'expense_id' => $this->faker->randomNumber(),
+                ],
+            ];
+        });
     }
 }

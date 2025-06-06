@@ -5,9 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Notification extends Model
 {
+    use HasFactory, SoftDeletes;
     protected $fillable = [
         'user_id',
         'notification_type_id',
@@ -76,5 +79,13 @@ class Notification extends Model
     public function isRead(): bool
     {
         return $this->read_at !== null;
+    }
+
+    /**
+     * Get the is_read attribute (accessor for compatibility).
+     */
+    public function getIsReadAttribute(): bool
+    {
+        return $this->isRead();
     }
 }

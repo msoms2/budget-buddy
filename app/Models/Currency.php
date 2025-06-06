@@ -4,9 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Currency extends Model
 {
+    use HasFactory;
     protected $fillable = [
         'code',
         'name',
@@ -32,6 +34,46 @@ class Currency extends Model
     }
 
     /**
+     * Get expenses using this currency.
+     */
+    public function expenses(): HasMany
+    {
+        return $this->hasMany(Expense::class);
+    }
+
+    /**
+     * Get earnings using this currency.
+     */
+    public function earnings(): HasMany
+    {
+        return $this->hasMany(Earning::class);
+    }
+
+    /**
+     * Get investments using this currency.
+     */
+    public function investments(): HasMany
+    {
+        return $this->hasMany(Investment::class);
+    }
+
+    /**
+     * Get budgets using this currency.
+     */
+    public function budgets(): HasMany
+    {
+        return $this->hasMany(Budget::class);
+    }
+
+    /**
+     * Get goals using this currency.
+     */
+    public function goals(): HasMany
+    {
+        return $this->hasMany(Goal::class);
+    }
+
+    /**
      * Get the default currency.
      */
     public static function getDefault()
@@ -43,6 +85,14 @@ class Currency extends Model
      * Alias for getDefault() to maintain compatibility with existing code.
      */
     public static function getDefaultCurrency()
+    {
+        return static::getDefault();
+    }
+
+    /**
+     * Get the base currency (alias for getDefault).
+     */
+    public static function getBase()
     {
         return static::getDefault();
     }

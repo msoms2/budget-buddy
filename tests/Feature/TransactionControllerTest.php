@@ -34,7 +34,7 @@ class TransactionControllerTest extends TestCase
             'is_recurring' => false,
         ]);
 
-        $response->assertRedirect(route('expenses.index'));
+        $response->assertRedirect(route('expense-category.show', $category->id));
         $this->assertDatabaseHas('expenses', [
             'name' => 'Test Expense',
             'amount' => 100.50,
@@ -58,7 +58,7 @@ class TransactionControllerTest extends TestCase
             'is_recurring' => false,
         ]);
 
-        $response->assertRedirect(route('earnings.index'));
+        $response->assertRedirect(route('income-category.show', $category->id));
         $this->assertDatabaseHas('earnings', [
             'name' => 'Test Income',
             'amount' => 200.75,

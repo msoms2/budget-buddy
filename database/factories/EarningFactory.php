@@ -3,7 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\Earning;
-use App\Models\Category;
+use App\Models\EarningCategory;
 use App\Models\Currency;
 use App\Models\PaymentMethod;
 use App\Models\User;
@@ -25,7 +25,7 @@ class EarningFactory extends Factory
             'description' => $this->faker->optional(0.7)->sentence(),
             'date' => $this->faker->dateTimeBetween("$pastYear-01-01", "$currentYear-01-01"),
             'user_id' => User::factory(),
-            'category_id' => Category::factory()->income(),
+            'category_id' => EarningCategory::factory(),
             'payment_method_id' => PaymentMethod::factory(),
             'currency_id' => function () {
                 $currency = Currency::where('code', 'USD')->first();

@@ -33,6 +33,7 @@ class RegistrationTest extends TestCase
             'name' => 'United States',
             'code' => 'US',
             'currency_id' => $currency->id,
+            'currency_code' => 'USD',
         ]);
 
         $response = $this->post('/register', [

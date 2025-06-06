@@ -162,39 +162,39 @@ class ReportController extends Controller
      */
     private function getComprehensiveMonthlyData($userId, $startDate, $endDate)
     {
-        // Get monthly totals
+        // Get monthly totals using SQLite-compatible date formatting
         $monthlyIncome = DB::table('earnings')
-            ->select(DB::raw("DATE_FORMAT(date, '%Y-%m') as month"), DB::raw('SUM(amount) as total'))
+            ->select(DB::raw("strftime('%Y-%m', date) as month"), DB::raw('SUM(amount) as total'))
             ->where('user_id', $userId)
             ->whereBetween('date', [$startDate, $endDate])
-            ->groupBy(DB::raw("DATE_FORMAT(date, '%Y-%m')"))
+            ->groupBy(DB::raw("strftime('%Y-%m', date)"))
             ->get()
             ->keyBy('month');
 
         $monthlyExpenses = DB::table('expenses')
-            ->select(DB::raw("DATE_FORMAT(date, '%Y-%m') as month"), DB::raw('SUM(amount) as total'))
+            ->select(DB::raw("strftime('%Y-%m', date) as month"), DB::raw('SUM(amount) as total'))
             ->where('user_id', $userId)
             ->whereBetween('date', [$startDate, $endDate])
-            ->groupBy(DB::raw("DATE_FORMAT(date, '%Y-%m')"))
+            ->groupBy(DB::raw("strftime('%Y-%m', date)"))
             ->get()
             ->keyBy('month');
 
         // Get recurring transactions for stability analysis
         $recurringIncome = DB::table('earnings')
-            ->select(DB::raw("DATE_FORMAT(date, '%Y-%m') as month"), DB::raw('SUM(amount) as total'))
+            ->select(DB::raw("strftime('%Y-%m', date) as month"), DB::raw('SUM(amount) as total'))
             ->where('user_id', $userId)
             ->where('is_recurring', true)
             ->whereBetween('date', [$startDate, $endDate])
-            ->groupBy(DB::raw("DATE_FORMAT(date, '%Y-%m')"))
+            ->groupBy(DB::raw("strftime('%Y-%m', date)"))
             ->get()
             ->keyBy('month');
 
         $recurringExpenses = DB::table('expenses')
-            ->select(DB::raw("DATE_FORMAT(date, '%Y-%m') as month"), DB::raw('SUM(amount) as total'))
+            ->select(DB::raw("strftime('%Y-%m', date) as month"), DB::raw('SUM(amount) as total'))
             ->where('user_id', $userId)
             ->where('is_recurring', true)
             ->whereBetween('date', [$startDate, $endDate])
-            ->groupBy(DB::raw("DATE_FORMAT(date, '%Y-%m')"))
+            ->groupBy(DB::raw("strftime('%Y-%m', date)"))
             ->get()
             ->keyBy('month');
 
@@ -610,16 +610,17 @@ class ReportController extends Controller
         
         // Calculate initial seasonal factors
         for ($i = 0; $i < min(12, $n); $i++) {
-            $seasonal[$i] = $values[$i] / $level;
+            $seasonal[$i] = $level > 0 ? $values[$i] / $level : 1.0;
         }
         
         // Apply smoothing
         for ($i = 1; $i < $n; $i++) {
             $seasonIndex = $i % 12;
             
-            $newLevel = $alpha * ($values[$i] / $seasonal[$seasonIndex]) + (1 - $alpha) * ($level + $trend);
+            $seasonalFactor = $seasonal[$seasonIndex] > 0 ? $seasonal[$seasonIndex] : 1.0;
+            $newLevel = $alpha * ($values[$i] / $seasonalFactor) + (1 - $alpha) * ($level + $trend);
             $newTrend = $beta * ($newLevel - $level) + (1 - $beta) * $trend;
-            $newSeasonal = $gamma * ($values[$i] / $newLevel) + (1 - $gamma) * $seasonal[$seasonIndex];
+            $newSeasonal = $newLevel > 0 ? $gamma * ($values[$i] / $newLevel) + (1 - $gamma) * $seasonal[$seasonIndex] : $seasonal[$seasonIndex];
             
             $level = $newLevel;
             $trend = $newTrend;
@@ -1882,5 +1883,242 @@ class ReportController extends Controller
     {
         // Redirect to the statistics payment method analysis
         return redirect()->route('statistics.payment-methods');
+    }
+
+    /**
+     * Get active budgets with usage information
+     */
+    private function getActiveBudgets($startDate = null, $endDate = null)
+    {
+        $userId = auth()->id();
+        $currentMonth = Carbon::now()->startOfMonth();
+        $endOfMonth = Carbon::now()->endOfMonth();
+
+        if ($startDate) {
+            $currentMonth = Carbon::parse($startDate)->startOfMonth();
+        }
+        if ($endDate) {
+            $endOfMonth = Carbon::parse($endDate)->endOfMonth();
+        }
+
+        $budgets = Budget::where('user_id', $userId)
+            ->where('start_date', '<=', $endOfMonth)
+            ->where('end_date', '>=', $currentMonth)
+            ->with(['category'])
+            ->get();
+
+        return $budgets->map(function($budget) use ($currentMonth, $endOfMonth) {
+            $spent = Expense::where('user_id', auth()->id())
+                ->where('category_id', $budget->category_id)
+                ->whereBetween('date', [$currentMonth, $endOfMonth])
+                ->sum('amount');
+
+            $percentUsed = $budget->amount > 0 ? ($spent / $budget->amount) * 100 : 0;
+
+            return [
+                'id' => $budget->id,
+                'name' => $budget->name,
+                'amount' => $budget->amount,
+                'spent' => $spent,
+                'remaining' => max(0, $budget->amount - $spent),
+                'percent_used' => round($percentUsed, 1),
+                'category' => $budget->category ? $budget->category->name : 'Uncategorized',
+                'status' => $percentUsed >= 100 ? 'exceeded' : ($percentUsed >= 80 ? 'warning' : 'good')
+            ];
+        });
+    }
+
+    /**
+     * Get income data for comparison reports
+     */
+    private function getIncomeData($dateRange)
+    {
+        $userId = auth()->id();
+        $startDate = Carbon::parse($dateRange['start'])->startOfDay();
+        $endDate = Carbon::parse($dateRange['end'])->endOfDay();
+
+        $incomeData = Earning::where('user_id', $userId)
+            ->whereBetween('date', [$startDate, $endDate])
+            ->with(['category'])
+            ->get()
+            ->groupBy(function($earning) {
+                return $earning->date->format('Y-m');
+            })
+            ->map(function($monthlyEarnings) {
+                return [
+                    'total' => $monthlyEarnings->sum('amount'),
+                    'count' => $monthlyEarnings->count(),
+                    'categories' => $monthlyEarnings->groupBy('category.name')->map(function($categoryEarnings) {
+                        return [
+                            'total' => $categoryEarnings->sum('amount'),
+                            'count' => $categoryEarnings->count()
+                        ];
+                    })
+                ];
+            });
+
+        return $incomeData;
+    }
+
+    /**
+     * Get expense data for comparison reports
+     */
+    private function getExpenseData($dateRange)
+    {
+        $userId = auth()->id();
+        $startDate = Carbon::parse($dateRange['start'])->startOfDay();
+        $endDate = Carbon::parse($dateRange['end'])->endOfDay();
+
+        $expenseData = Expense::where('user_id', $userId)
+            ->whereBetween('date', [$startDate, $endDate])
+            ->with(['category'])
+            ->get()
+            ->groupBy(function($expense) {
+                return $expense->date->format('Y-m');
+            })
+            ->map(function($monthlyExpenses) {
+                return [
+                    'total' => $monthlyExpenses->sum('amount'),
+                    'count' => $monthlyExpenses->count(),
+                    'categories' => $monthlyExpenses->groupBy('category.name')->map(function($categoryExpenses) {
+                        return [
+                            'total' => $categoryExpenses->sum('amount'),
+                            'count' => $categoryExpenses->count()
+                        ];
+                    })
+                ];
+            });
+
+        return $expenseData;
+    }
+
+    /**
+     * Get category comparison data
+     */
+    private function getCategoryComparison($dateRange)
+    {
+        $userId = auth()->id();
+        $startDate = Carbon::parse($dateRange['start'])->startOfDay();
+        $endDate = Carbon::parse($dateRange['end'])->endOfDay();
+
+        $expensesByCategory = Expense::where('user_id', $userId)
+            ->whereBetween('date', [$startDate, $endDate])
+            ->with(['category'])
+            ->get()
+            ->groupBy('category.name')
+            ->map(function($expenses) {
+                return $expenses->sum('amount');
+            });
+
+        $incomeByCategory = Earning::where('user_id', $userId)
+            ->whereBetween('date', [$startDate, $endDate])
+            ->with(['category'])
+            ->get()
+            ->groupBy('category.name')
+            ->map(function($earnings) {
+                return $earnings->sum('amount');
+            });
+
+        return [
+            'expenses' => $expensesByCategory,
+            'income' => $incomeByCategory
+        ];
+    }
+
+    /**
+     * Get recent reports (stub for now)
+     */
+    private function getRecentReports($type)
+    {
+        // This is a stub - implement based on your ExpensesReport/EarningReport models
+        return collect();
+    }
+
+    /**
+     * Get top expense categories
+     */
+    private function getTopExpenseCategories($startDate, $endDate)
+    {
+        $userId = auth()->id();
+
+        return Expense::where('user_id', $userId)
+            ->whereBetween('date', [$startDate, $endDate])
+            ->with(['category'])
+            ->get()
+            ->groupBy('category.name')
+            ->map(function($expenses, $categoryName) {
+                return [
+                    'name' => $categoryName ?: 'Uncategorized',
+                    'total' => $expenses->sum('amount'),
+                    'count' => $expenses->count()
+                ];
+            })
+            ->sortByDesc('total')
+            ->take(5)
+            ->values();
+    }
+
+    /**
+     * Get top tags (stub for now)
+     */
+    private function getTopTags($startDate, $endDate)
+    {
+        // This is a stub - implement based on your Tag system
+        return collect();
+    }
+
+    /**
+     * Get payment method breakdown
+     */
+    private function getPaymentMethodBreakdown($startDate, $endDate)
+    {
+        $userId = auth()->id();
+
+        return Expense::where('user_id', $userId)
+            ->whereBetween('date', [$startDate, $endDate])
+            ->with(['paymentMethod'])
+            ->get()
+            ->groupBy('paymentMethod.name')
+            ->map(function($expenses, $methodName) {
+                return [
+                    'name' => $methodName ?: 'Unknown',
+                    'total' => $expenses->sum('amount'),
+                    'count' => $expenses->count()
+                ];
+            })
+            ->sortByDesc('total')
+            ->values();
+    }
+
+    /**
+     * Calculate spending pace
+     */
+    private function calculateSpendingPace($startDate, $endDate)
+    {
+        // This is a stub - implement based on your requirements
+        return [
+            'current_pace' => 0,
+            'projected_total' => 0,
+            'on_track' => true
+        ];
+    }
+
+    /**
+     * Get budget category breakdown
+     */
+    private function getBudgetCategoryBreakdown($startDate, $endDate)
+    {
+        $userId = auth()->id();
+        $budgets = $this->getActiveBudgets($startDate, $endDate);
+
+        return $budgets->map(function($budget) {
+            return [
+                'category' => $budget['category'],
+                'budgeted' => $budget['amount'],
+                'spent' => $budget['spent'],
+                'remaining' => $budget['remaining'],
+                'percent_used' => $budget['percent_used']
+            ];
+        });
     }
 }

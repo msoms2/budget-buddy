@@ -11,47 +11,68 @@ class NotificationTypeFactory extends Factory
 
     public function definition(): array
     {
+        // Generate unique slug to avoid duplicates
+        $slug = 'notification_' . $this->faker->unique()->word;
+        
         return [
-            'name' => $this->faker->words(3, true),
-            'slug' => $this->faker->unique()->slug(),
+            'slug' => $slug,
+            'name' => ucfirst($this->faker->words(2, true)) . ' Notification',
             'description' => $this->faker->sentence(),
-            'is_active' => true,
-            'created_at' => now(),
-            'updated_at' => now()
         ];
     }
 
-    public function inactive(): static
+    public function budgetLimit(): self
     {
-        return $this->state(fn (array $attributes) => [
-            'is_active' => false
-        ]);
+        return $this->state(function (array $attributes) {
+            return [
+                'slug' => 'budget_limit',
+                'name' => 'Budget Limit Warning',
+                'description' => 'Notification when budget limit is reached',
+            ];
+        });
     }
 
-    public function budgetAlert(): static
+    public function largeExpense(): self
     {
-        return $this->state(fn (array $attributes) => [
-            'name' => 'Budget Limit Alert',
-            'slug' => 'budget_limit_alert',
-            'description' => 'Alert when budget limit is approached or exceeded'
-        ]);
+        return $this->state(function (array $attributes) {
+            return [
+                'slug' => 'large_expense',
+                'name' => 'Large Expense Alert',
+                'description' => 'Notification for large expense transactions',
+            ];
+        });
     }
 
-    public function largeExpense(): static
+    public function goalMilestone(): self
     {
-        return $this->state(fn (array $attributes) => [
-            'name' => 'Large Expense Alert',
-            'slug' => 'large_expense',
-            'description' => 'Alert when a large expense is recorded'
-        ]);
+        return $this->state(function (array $attributes) {
+            return [
+                'slug' => 'goal_milestone',
+                'name' => 'Goal Milestone',
+                'description' => 'Notification when reaching a savings goal milestone',
+            ];
+        });
     }
 
-    public function goalProgress(): static
+    public function recurringPayment(): self
     {
-        return $this->state(fn (array $attributes) => [
-            'name' => 'Goal Progress Update',
-            'slug' => 'goal_progress_update',
-            'description' => 'Update on financial goal progress'
-        ]);
+        return $this->state(function (array $attributes) {
+            return [
+                'slug' => 'recurring_payment',
+                'name' => 'Recurring Payment Reminder',
+                'description' => 'Reminder for upcoming recurring payments',
+            ];
+        });
+    }
+
+    public function monthlySummary(): self
+    {
+        return $this->state(function (array $attributes) {
+            return [
+                'slug' => 'monthly_summary',
+                'name' => 'Monthly Summary',
+                'description' => 'Monthly financial summary notification',
+            ];
+        });
     }
 }
