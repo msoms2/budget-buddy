@@ -53,6 +53,7 @@ import {
   ChartLegendContent,
 } from "@/components/ui/chart";
 import { useCurrency } from '@/hooks/useCurrency.jsx';
+import IncomeAnalysisOverview from "@/components/IncomeAnalysis/IncomeAnalysisOverview";
 
 export default function Index({
     auth,
@@ -1161,6 +1162,35 @@ export default function Index({
                               </div>
                           </CardFooter>
                       </Card>
+                    )}
+
+                    {/* Income Sources Overview */}
+                    {activeTab === 'earnings' && incomeAnalysis && (
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Income Sources Overview</CardTitle>
+                                <CardDescription>Analysis of your income distribution and stability</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <IncomeAnalysisOverview 
+                                    data={incomeAnalysis} 
+                                    isLoading={false} 
+                                    error={null} 
+                                />
+                            </CardContent>
+                            <CardFooter className="flex items-center justify-between">
+                                <div className="text-sm text-muted-foreground">
+                                    Based on your income history and distribution patterns
+                                </div>
+                                <Link 
+                                    href={route('income-analysis')} 
+                                    className="text-blue-600 dark:text-blue-400 hover:underline flex items-center"
+                                >
+                                    View detailed analysis
+                                    <ArrowUpRightIcon className="ml-1 size-3" />
+                                </Link>
+                            </CardFooter>
+                        </Card>
                     )}
 
                     {/* Monthly Trends */}

@@ -136,7 +136,7 @@ export default function SavingsPlanCard({ plan, onEdit, onAddProgress }) {
                 <span className="mr-2">Target: {formatDate(plan.target_date)}</span>
                 {plan.category && (
                   <Badge variant="outline" className="text-xs">
-                    {plan.category}
+                    {typeof plan.category === 'object' ? plan.category.name : plan.category}
                   </Badge>
                 )}
               </div>

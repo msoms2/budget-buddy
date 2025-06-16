@@ -169,10 +169,9 @@ export default function Show({ auth, saving, transactions }) {
                         <Badge className={statusInfo.color}>
                           <StatusIcon className="h-3 w-3 mr-1" />
                           {saving.status.charAt(0).toUpperCase() + saving.status.slice(1)}
-                        </Badge>
-                        {saving.category && (
+                        </Badge>                        {saving.category && (
                           <span className="text-sm text-gray-600 dark:text-gray-400">
-                            Category: {saving.category}
+                            Category: {typeof saving.category === 'object' && saving.category.name ? saving.category.name : (typeof saving.category === 'string' ? saving.category : '')}
                           </span>
                         )}
                       </div>

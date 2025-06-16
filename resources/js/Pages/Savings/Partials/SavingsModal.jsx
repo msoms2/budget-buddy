@@ -30,7 +30,7 @@ export default function SavingsModal({ isOpen, onClose, savings = null, categori
     const { currency } = useCurrency();
 
     // Transform categories into a flat list for display
-    const flattenedCategories = categories.map(category => ({
+    const flattenedCategories = (categories || []).map(category => ({
         id: category.id,
         name: category.name,
         icon: category.icon || '💰',

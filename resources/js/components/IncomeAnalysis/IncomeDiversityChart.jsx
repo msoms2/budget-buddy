@@ -133,22 +133,6 @@ export default function IncomeDiversityChart({ data, isLoading, error }) {
         )}
       </div>
 
-      {/* Key Insights Section */}
-      {(data?.primarySource?.percentage || data?.secondarySource?.percentage) && (
-        <div className="space-y-2 bg-muted/30 rounded-lg p-3 border-t">
-          <p className="text-sm font-medium">Key Insights</p>
-          {data?.primarySource?.percentage && (
-            <p className="text-xs text-muted-foreground">
-              Primary: {data.primarySource.name} ({Math.round(data.primarySource.percentage)}%)
-            </p>
-          )}
-          {data?.secondarySource?.percentage && (
-            <p className="text-xs text-muted-foreground">
-              Secondary: {data.secondarySource.name} ({Math.round(data.secondarySource.percentage)}%)
-            </p>
-          )}
-        </div>
-      )}
     </div>
   );
 }

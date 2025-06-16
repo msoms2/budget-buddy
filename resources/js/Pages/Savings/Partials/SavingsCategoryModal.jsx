@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { usePage } from '@inertiajs/react';
 import {
-    Dialog, 
-    DialogContent, 
+    Dialog,
+    DialogContent,
     DialogDescription,
     DialogHeader,
     DialogTitle,
@@ -18,6 +19,8 @@ const commonIcons = ['💰', '🏦', '💳', '🎯', '📈', '🏠', '🚗', '�
 const commonColors = ['#2563eb', '#16a34a', '#dc2626', '#9333ea', '#ea580c', '#0d9488', '#4f46e5', '#0369a1'];
 
 export default function SavingsCategoryModal({ isOpen, onClose, category = null, onSuccess }) {
+    const { props } = usePage();
+    const { auth } = props;
     const [processing, setProcessing] = useState(false);
     const [errors, setErrors] = useState({});
     const [data, setData] = useState({
@@ -86,16 +89,13 @@ const handleSubmit = async (e) => {
     console.log('Submitting form with data:', data);
     
     try {
-        if (!window.auth?.user?.id) {
-                setErrors({ general: 'User authentication required.' });
-                setProcessing(false);
-                return;
-            }
+        if (!auth?.user?.id) {
+            setErrors({ general: 'User authentication required.' });
+            setProcessing(false);
+            return;
+        }
 
-            const payload = {
-                ...data,
-                user_id: window.auth.user.id
-            };
+        const payload = { ...data };
             
             
             let response;

@@ -8,9 +8,11 @@ use App\Http\Requests\UpdateSavingsCategoryRequest;
 use App\Models\SavingsCategory;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class SavingsCategoryController extends Controller
 {
+    use AuthorizesRequests;
     /**
      * Display a listing of the savings categories.
      */
@@ -44,6 +46,8 @@ class SavingsCategoryController extends Controller
      */
     public function store(StoreSavingsCategoryRequest $request)
     {
+        $this->authorize('create', SavingsCategory::class);
+        
         $category = SavingsCategory::create($request->validated());
 
         return response()->json([

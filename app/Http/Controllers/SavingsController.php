@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Savings;
+use App\Models\SavingsCategory;
 use App\Models\SavingsTransaction;
 use App\Models\ExpenseCategory;
 use App\Models\Currency;
@@ -28,8 +29,14 @@ class SavingsController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
+        // Get savings categories for the modal
+        $categories = \App\Models\SavingsCategory::where('user_id', Auth::id())
+            ->orderBy('name')
+            ->get();
+
         return Inertia::render('Savings/Index', [
-            'savings' => $savings
+            'savings' => $savings,
+            'categories' => $categories
         ]);
     }
 

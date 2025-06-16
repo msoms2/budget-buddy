@@ -200,12 +200,13 @@ export default function Index({ auth, settings, options, flash }) {
             description: 'Currency management',
             color: 'text-emerald-600 dark:text-emerald-400'
         },
-        { 
-            id: 'extensions', 
-            label: 'Browser Compatibility', 
-            icon: AlertTriangle, 
+        {
+            id: 'extensions',
+            label: 'Browser Compatibility',
+            icon: AlertTriangle,
             description: 'Check for extension conflicts',
-            color: 'text-red-600 dark:text-red-400'
+            color: 'text-red-600 dark:text-red-400',
+            disabled: true // Mark this tab as disabled/greyed out
         }
     ];
     

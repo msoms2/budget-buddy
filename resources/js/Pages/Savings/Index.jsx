@@ -452,6 +452,8 @@ export default function Index({ auth, savings, categories }) {
                 try {
                   await router.reload({ only: ['categories'] });
                   setShowCategoryModal(false);
+                  // Force re-render of the page to ensure updated categories are available
+                  router.reload();
                 } catch (error) {
                   console.error('Error reloading categories:', error);
                 }
