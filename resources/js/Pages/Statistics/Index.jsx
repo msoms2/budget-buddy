@@ -301,7 +301,7 @@ export default function Index({
             <AppSidebar />
             <SidebarInset>
                 <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
-                    <div className="flex items-center gap-2 px-4 justify-between">
+                    <div className="flex items-center gap-2 px-4 w-full">
                         <div className="flex items-center gap-2">
                             <SidebarTrigger className="-ml-1" />
                             <Separator orientation="vertical" className="mr-2 h-4" />
@@ -311,146 +311,302 @@ export default function Index({
                                 </BreadcrumbItem>
                             </Breadcrumb>
                         </div>
-                        <div className="flex bg-gray-100 dark:bg-gray-800 rounded-md p-1">
-                            <button
-                                onClick={() => setActiveTab('earnings')}
-                                className={`px-4 py-1 rounded-md transition-colors ${
-                                    activeTab === 'earnings'
-                                        ? 'bg-white dark:bg-gray-700'
-                                        : 'hover:bg-gray-200 dark:hover:bg-gray-600'
-                                }`}
-                            >
-                                Income
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('expenses')}
-                                className={`px-4 py-1 rounded-md transition-colors ${
-                                    activeTab === 'expenses'
-                                        ? 'bg-white dark:bg-gray-700'
-                                        : 'hover:bg-gray-200 dark:hover:bg-gray-600'
-                                }`}
-                            >
-                                Expenses
-                            </button>
-                        </div>
-                    </div>
-                </header>
-
-                <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-                    {/* Date Range Selector */}
-                    <div className="flex justify-end items-center mb-4">
-                        <Popover>
-                            <PopoverTrigger asChild>
-                                <Button
-                                    variant="outline"
-                                    className="w-[260px] justify-start text-left font-normal"
-                                >
-                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {selectedTimePeriod === 'all' ? (
-                                        "All Time"
-                                    ) : dates?.from ? (
-                                        dates.to ? (
-                                            <>
-                                                {format(dates.from, "MMM dd, yyyy")} -{" "}
-                                                {format(dates.to, "MMM dd, yyyy")}
-                                            </>
+                        <div className="flex-1"></div>
+                        <div className="flex items-center gap-3 ml-auto">
+                            {/* Date Range Selector */}
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button
+                                        variant="outline"
+                                        className="w-[260px] justify-start text-left font-normal"
+                                    >
+                                        <CalendarIcon className="mr-2 h-4 w-4" />
+                                        {selectedTimePeriod === 'all' ? (
+                                            "All Time"
+                                        ) : dates?.from ? (
+                                            dates.to ? (
+                                                <>
+                                                    {format(dates.from, "MMM dd, yyyy")} -{" "}
+                                                    {format(dates.to, "MMM dd, yyyy")}
+                                                </>
+                                            ) : (
+                                                format(dates.from, "MMM dd, yyyy")
+                                            )
                                         ) : (
-                                            format(dates.from, "MMM dd, yyyy")
-                                        )
-                                    ) : (
-                                        <span>Select date range</span>
-                                    )}
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="end">
-                                <div className="flex flex-col">
-                                    {/* Calendar */}
-                                    <div className="flex flex-col p-4 sm:flex-row space-x-0 sm:space-x-4">
-                                        <div className="mb-4 sm:mb-0">
-                                            <p className="mb-2 text-sm font-medium">Start Date</p>
-                                            <Calendar
-                                                initialFocus
-                                                mode="single"
-                                                selected={dates?.from}
-                                                onSelect={(date) => {
-                                                    if (date) {
-                                                        // Ensure we don't select a start date after the end date
-                                                        const newEnd = dates?.to && date > dates.to ? date : dates?.to;
-                                                        setDates({
-                                                            from: date,
-                                                            to: newEnd || date
-                                                        });
-                                                    }
-                                                }}
-                                                disabled={(date) => 
-                                                    // Can't select dates in the future
-                                                    date > new Date()
-                                                }
-                                            />
-                                        </div>
-                                        <div>
-                                            <p className="mb-2 text-sm font-medium">End Date</p>
-                                            <Calendar
-                                                initialFocus
-                                                mode="single"
-                                                selected={dates?.to}
-                                                onSelect={(date) => {
-                                                    if (date) {
-                                                        setDates({
-                                                            from: dates?.from || date,
-                                                            to: date
-                                                        });
-
-                                                        // Apply the date selection if both dates are selected
-                                                        if (dates?.from) {
-                                                            handleDateChange({
-                                                                from: dates.from,
-                                                                to: date
+                                            <span>Select date range</span>
+                                        )}
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="end">
+                                    <div className="flex flex-col">
+                                        {/* Calendar */}
+                                        <div className="flex flex-col p-4 sm:flex-row space-x-0 sm:space-x-4">
+                                            <div className="mb-4 sm:mb-0">
+                                                <p className="mb-2 text-sm font-medium">Start Date</p>
+                                                <Calendar
+                                                    initialFocus
+                                                    mode="single"
+                                                    selected={dates?.from}
+                                                    onSelect={(date) => {
+                                                        if (date) {
+                                                            // Ensure we don't select a start date after the end date
+                                                            const newEnd = dates?.to && date > dates.to ? date : dates?.to;
+                                                            setDates({
+                                                                from: date,
+                                                                to: newEnd || date
                                                             });
                                                         }
-                                                    }
-                                                }}
-                                                disabled={(date) => 
-                                                    // Can't select dates before the start date or in the future
-                                                    (dates?.from && date < dates.from) || date > new Date()
-                                                }
-                                            />
-                                        </div>
-                                    </div>
-                                    
-                                    {/* Time Period Options */}
-                                    <div className="grid grid-cols-2 gap-2 p-3 border-t border-border">
-                                        <div className="flex flex-col gap-1">
-                                            <div className="flex justify-between">
-                                                <Button 
-                                                    variant={(selectedTimePeriod === 'week' || selectedTimePeriod === 'current_week') ? "default" : "outline"} 
-                                                    size="sm" 
-                                                    className="w-full"
-                                                    onClick={() => {
-                                                        setSelectedTimePeriod('week');
-                                                        setSelectedPeriodType('last');
-                                                        handleDateChange({
-                                                            from: subDays(new Date(), 7),
-                                                            to: new Date()
-                                                        });
-                                                        
-                                                        router.visit(route('statistics.index'), {
-                                                            data: { 
-                                                                dateRange: 'week',
-                                                                periodType: 'last'
-                                                            },
-                                                            preserveState: true,
-                                                            preserveScroll: true,
-                                                        });
                                                     }}
-                                                >
-                                                    Week
-                                                </Button>
-                                                
-                                                <Button 
-                                                    variant={(selectedTimePeriod === 'month' || selectedTimePeriod === 'current_month') ? "default" : "outline"} 
-                                                    size="sm" 
-                                                    className="w-full"
+                                                    disabled={(date) =>
+                                                        // Can't select dates in the future
+                                                        date > new Date()
+                                                    }
+                                                />
+                                            </div>
+                                            <div>
+                                                <p className="mb-2 text-sm font-medium">End Date</p>
+                                                <Calendar
+                                                    initialFocus
+                                                    mode="single"
+                                                    selected={dates?.to}
+                                                    onSelect={(date) => {
+                                                        if (date) {
+                                                            setDates({
+                                                                from: dates?.from || date,
+                                                                to: date
+                                                            });
+
+                                                            // Apply the date selection if both dates are selected
+                                                            if (dates?.from) {
+                                                                handleDateChange({
+                                                                    from: dates.from,
+                                                                    to: date
+                                                                });
+                                                            }
+                                                        }
+                                                    }}
+                                                    disabled={(date) =>
+                                                        // Can't select dates before the start date or in the future
+                                                        (dates?.from && date < dates.from) || date > new Date()
+                                                    }
+                                                />
+                                            </div>
+                                        </div>
+                                        
+                                        {/* Time Period Options */}
+                                        <div className="grid grid-cols-2 gap-2 p-3 border-t border-border">
+                                            <div className="flex flex-col gap-1">
+                                                <div className="flex justify-between">
+                                                    <Button
+                                                        variant={(selectedTimePeriod === 'week' || selectedTimePeriod === 'current_week') ? "default" : "outline"}
+                                                        size="sm"
+                                                        className="w-full"
+                                                        onClick={() => {
+                                                            setSelectedTimePeriod('week');
+                                                            setSelectedPeriodType('last');
+                                                            handleDateChange({
+                                                                from: subDays(new Date(), 7),
+                                                                to: new Date()
+                                                            });
+                                                            
+                                                            router.visit(route('statistics.index'), {
+                                                                data: {
+                                                                    dateRange: 'week',
+                                                                    periodType: 'last'
+                                                                },
+                                                                preserveState: true,
+                                                                preserveScroll: true,
+                                                            });
+                                                        }}
+                                                    >
+                                                        Week
+                                                    </Button>
+                                                    
+                                                    <Button
+                                                        variant={(selectedTimePeriod === 'month' || selectedTimePeriod === 'current_month') ? "default" : "outline"}
+                                                        size="sm"
+                                                        className="w-full"
+                                                        onClick={() => {
+                                                            setSelectedTimePeriod('month');
+                                                            setSelectedPeriodType('last');
+                                                            handleDateChange({
+                                                                from: subDays(new Date(), 30),
+                                                                to: new Date()
+                                                            });
+                                                            
+                                                            router.visit(route('statistics.index'), {
+                                                                data: {
+                                                                    dateRange: 'month',
+                                                                    periodType: 'last'
+                                                                },
+                                                                preserveState: true,
+                                                                preserveScroll: true,
+                                                            });
+                                                        }}
+                                                    >
+                                                        Month
+                                                    </Button>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <Button
+                                                        variant={(selectedTimePeriod === 'year' || selectedTimePeriod === 'current_year') ? "default" : "outline"}
+                                                        size="sm"
+                                                        className="w-full"
+                                                        onClick={() => {
+                                                            setSelectedTimePeriod('year');
+                                                            setSelectedPeriodType('last');
+                                                            handleDateChange({
+                                                                from: subMonths(new Date(), 12),
+                                                                to: new Date()
+                                                            });
+                                                            
+                                                            router.visit(route('statistics.index'), {
+                                                                data: {
+                                                                    dateRange: 'year',
+                                                                    periodType: 'last'
+                                                                },
+                                                                preserveState: true,
+                                                                preserveScroll: true,
+                                                            });
+                                                        }}
+                                                    >
+                                                        Year
+                                                    </Button>
+                                                    
+                                                    <Button
+                                                        variant={(selectedTimePeriod === 'all') ? "default" : "outline"}
+                                                        size="sm"
+                                                        className="w-full"
+                                                        onClick={() => {
+                                                            setSelectedTimePeriod('all');
+                                                            setSelectedPeriodType('last');
+                                                            
+                                                            // Let the server handle finding the earliest record date
+                                                            router.visit(route('statistics.index'), {
+                                                                data: {
+                                                                    dateRange: 'all',
+                                                                    periodType: 'last'
+                                                                },
+                                                                preserveState: true,
+                                                                preserveScroll: true,
+                                                            });
+                                                        }}
+                                                    >
+                                                        All
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                            <div className="flex flex-col justify-between gap-1">
+                                                <div className="flex justify-between">
+                                                    <Button
+                                                        variant={selectedPeriodType === 'current' ? "default" : "outline"}
+                                                        size="sm"
+                                                        className={`w-full ${selectedPeriodType === 'current' ? 'bg-primary hover:bg-primary/90' : ''}`}
+                                                        onClick={() => {
+                                                            setSelectedPeriodType('current');
+                                                            let newDateRange;
+                                                            let from, to;
+                                                            
+                                                            switch(selectedTimePeriod) {
+                                                                case 'week':
+                                                                case 'current_week':
+                                                                    newDateRange = 'current_week';
+                                                                    from = startOfWeek(new Date());
+                                                                    to = endOfWeek(new Date());
+                                                                    break;
+                                                                case 'month':
+                                                                case 'current_month':
+                                                                default:
+                                                                    newDateRange = 'current_month';
+                                                                    from = startOfMonth(new Date());
+                                                                    to = endOfMonth(new Date());
+                                                                    break;
+                                                                case 'year':
+                                                                case 'current_year':
+                                                                    newDateRange = 'current_year';
+                                                                    from = startOfYear(new Date());
+                                                                    to = endOfYear(new Date());
+                                                                    break;
+                                                                case 'all':
+                                                                    newDateRange = 'all';
+                                                                    from = new Date(0);
+                                                                    to = new Date();
+                                                                    break;
+                                                            }
+                                                            
+                                                            handleDateChange({
+                                                                from: from,
+                                                                to: to
+                                                            });
+                                                            
+                                                            router.visit(route('statistics.index'), {
+                                                                data: {
+                                                                    dateRange: newDateRange,
+                                                                    periodType: 'current'
+                                                                },
+                                                                preserveState: true,
+                                                                preserveScroll: true,
+                                                            });
+                                                        }}
+                                                    >
+                                                        Current
+                                                    </Button>
+                                                    
+                                                    <Button
+                                                        variant={selectedPeriodType === 'last' ? "default" : "outline"}
+                                                        size="sm"
+                                                        className={`w-full ${selectedPeriodType === 'last' ? 'bg-primary hover:bg-primary/90' : ''}`}
+                                                        onClick={() => {
+                                                            setSelectedPeriodType('last');
+                                                            let from, to;
+                                                            let actualTimePeriod = selectedTimePeriod;
+                                                            
+                                                            // Convert current_* periods to their base period type
+                                                            if (selectedTimePeriod === 'current_week') actualTimePeriod = 'week';
+                                                            else if (selectedTimePeriod === 'current_month') actualTimePeriod = 'month';
+                                                            else if (selectedTimePeriod === 'current_year') actualTimePeriod = 'year';
+                                                            
+                                                            switch(actualTimePeriod) {
+                                                                case 'week':
+                                                                    from = subDays(new Date(), 7);
+                                                                    to = new Date();
+                                                                    break;
+                                                                case 'month':
+                                                                default:
+                                                                    from = startOfMonth(subMonths(new Date(), 1));
+                                                                    to = endOfMonth(subMonths(new Date(), 1));
+                                                                    break;
+                                                                case 'year':
+                                                                    from = subMonths(new Date(), 12);
+                                                                    to = new Date();
+                                                                    break;
+                                                                case 'all':
+                                                                    from = new Date(0);
+                                                                    to = new Date();
+                                                                    break;
+                                                            }
+                                                            
+                                                            handleDateChange({
+                                                                from: from,
+                                                                to: to
+                                                            });
+                                                            
+                                                            router.visit(route('statistics.index'), {
+                                                                data: {
+                                                                    dateRange: actualTimePeriod,
+                                                                    periodType: 'last'
+                                                                },
+                                                                preserveState: true,
+                                                                preserveScroll: true,
+                                                            });
+                                                        }}
+                                                    >
+                                                        Last
+                                                    </Button>
+                                                </div>
+                                                <Button
+                                                    variant="secondary"
+                                                    size="sm"
                                                     onClick={() => {
                                                         setSelectedTimePeriod('month');
                                                         setSelectedPeriodType('last');
@@ -460,7 +616,7 @@ export default function Index({
                                                         });
                                                         
                                                         router.visit(route('statistics.index'), {
-                                                            data: { 
+                                                            data: {
                                                                 dateRange: 'month',
                                                                 periodType: 'last'
                                                             },
@@ -469,195 +625,42 @@ export default function Index({
                                                         });
                                                     }}
                                                 >
-                                                    Month
+                                                    Reset
                                                 </Button>
                                             </div>
-                                            <div className="flex justify-between">
-                                                <Button 
-                                                    variant={(selectedTimePeriod === 'year' || selectedTimePeriod === 'current_year') ? "default" : "outline"} 
-                                                    size="sm" 
-                                                    className="w-full"
-                                                    onClick={() => {
-                                                        setSelectedTimePeriod('year');
-                                                        setSelectedPeriodType('last');
-                                                        handleDateChange({
-                                                            from: subMonths(new Date(), 12),
-                                                            to: new Date()
-                                                        });
-                                                        
-                                                        router.visit(route('statistics.index'), {
-                                                            data: { 
-                                                                dateRange: 'year',
-                                                                periodType: 'last'
-                                                            },
-                                                            preserveState: true,
-                                                            preserveScroll: true,
-                                                        });
-                                                    }}
-                                                >
-                                                    Year
-                                                </Button>
-                                                
-                                                <Button 
-                                                    variant={(selectedTimePeriod === 'all') ? "default" : "outline"} 
-                                                    size="sm" 
-                                                    className="w-full"
-                                                    onClick={() => {
-                                                        setSelectedTimePeriod('all');
-                                                        setSelectedPeriodType('last');
-                                                        
-                                                        // Let the server handle finding the earliest record date
-                                                        router.visit(route('statistics.index'), {
-                                                            data: { 
-                                                                dateRange: 'all',
-                                                                periodType: 'last'
-                                                            },
-                                                            preserveState: true,
-                                                            preserveScroll: true,
-                                                        });
-                                                    }}
-                                                >
-                                                    All
-                                                </Button>
-                                            </div>
-                                        </div>
-                                        <div className="flex flex-col justify-between gap-1">
-                                            <div className="flex justify-between">
-                                                <Button 
-                                                    variant={selectedPeriodType === 'current' ? "default" : "outline"} 
-                                                    size="sm" 
-                                                    className={`w-full ${selectedPeriodType === 'current' ? 'bg-primary hover:bg-primary/90' : ''}`}
-                                                    onClick={() => {
-                                                        setSelectedPeriodType('current');
-                                                        let newDateRange;
-                                                        let from, to;
-                                                        
-                                                        switch(selectedTimePeriod) {
-                                                            case 'week':
-                                                            case 'current_week':
-                                                                newDateRange = 'current_week';
-                                                                from = startOfWeek(new Date());
-                                                                to = endOfWeek(new Date());
-                                                                break;
-                                                            case 'month':
-                                                            case 'current_month':
-                                                            default:
-                                                                newDateRange = 'current_month';
-                                                                from = startOfMonth(new Date());
-                                                                to = endOfMonth(new Date());
-                                                                break;
-                                                            case 'year':
-                                                            case 'current_year':
-                                                                newDateRange = 'current_year';
-                                                                from = startOfYear(new Date());
-                                                                to = endOfYear(new Date());
-                                                                break;
-                                                            case 'all':
-                                                                newDateRange = 'all';
-                                                                from = new Date(0);
-                                                                to = new Date();
-                                                                break;
-                                                        }
-                                                        
-                                                        handleDateChange({
-                                                            from: from,
-                                                            to: to
-                                                        });
-                                                        
-                                                        router.visit(route('statistics.index'), {
-                                                            data: { 
-                                                                dateRange: newDateRange,
-                                                                periodType: 'current'
-                                                            },
-                                                            preserveState: true,
-                                                            preserveScroll: true,
-                                                        });
-                                                    }}
-                                                >
-                                                    Current
-                                                </Button>
-                                                
-                                                <Button 
-                                                    variant={selectedPeriodType === 'last' ? "default" : "outline"} 
-                                                    size="sm" 
-                                                    className={`w-full ${selectedPeriodType === 'last' ? 'bg-primary hover:bg-primary/90' : ''}`}
-                                                    onClick={() => {
-                                                        setSelectedPeriodType('last');
-                                                        let from, to;
-                                                        let actualTimePeriod = selectedTimePeriod;
-                                                        
-                                                        // Convert current_* periods to their base period type
-                                                        if (selectedTimePeriod === 'current_week') actualTimePeriod = 'week';
-                                                        else if (selectedTimePeriod === 'current_month') actualTimePeriod = 'month';
-                                                        else if (selectedTimePeriod === 'current_year') actualTimePeriod = 'year';
-                                                        
-                                                        switch(actualTimePeriod) {
-                                                            case 'week':
-                                                                from = subDays(new Date(), 7);
-                                                                to = new Date();
-                                                                break;
-                                                            case 'month':
-                                                            default:
-                                                                from = startOfMonth(subMonths(new Date(), 1));
-                                                                to = endOfMonth(subMonths(new Date(), 1));
-                                                                break;
-                                                            case 'year':
-                                                                from = subMonths(new Date(), 12);
-                                                                to = new Date();
-                                                                break;
-                                                            case 'all':
-                                                                from = new Date(0);
-                                                                to = new Date();
-                                                                break;
-                                                        }
-                                                        
-                                                        handleDateChange({
-                                                            from: from,
-                                                            to: to
-                                                        });
-                                                        
-                                                        router.visit(route('statistics.index'), {
-                                                            data: { 
-                                                                dateRange: actualTimePeriod,
-                                                                periodType: 'last'
-                                                            },
-                                                            preserveState: true,
-                                                            preserveScroll: true,
-                                                        });
-                                                    }}
-                                                >
-                                                    Last
-                                                </Button>
-                                            </div>
-                                            <Button 
-                                                variant="secondary" 
-                                                size="sm"
-                                                onClick={() => {
-                                                    setSelectedTimePeriod('month');
-                                                    setSelectedPeriodType('last');
-                                                    handleDateChange({
-                                                        from: subDays(new Date(), 30),
-                                                        to: new Date()
-                                                    });
-                                                    
-                                                    router.visit(route('statistics.index'), {
-                                                        data: { 
-                                                            dateRange: 'month',
-                                                            periodType: 'last'
-                                                        },
-                                                        preserveState: true,
-                                                        preserveScroll: true,
-                                                    });
-                                                }}
-                                            >
-                                                Reset
-                                            </Button>
                                         </div>
                                     </div>
-                                </div>
-                            </PopoverContent>
-                        </Popover>
+                                </PopoverContent>
+                            </Popover>
+                            
+                            {/* Income/Expense Tabs */}
+                            <div className="flex bg-gray-100 dark:bg-gray-800 rounded-md p-1">
+                                <button
+                                    onClick={() => setActiveTab('earnings')}
+                                    className={`px-4 py-1 rounded-md transition-colors ${
+                                        activeTab === 'earnings'
+                                            ? 'bg-white dark:bg-gray-700'
+                                            : 'hover:bg-gray-200 dark:hover:bg-gray-600'
+                                    }`}
+                                >
+                                    Income
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('expenses')}
+                                    className={`px-4 py-1 rounded-md transition-colors ${
+                                        activeTab === 'expenses'
+                                            ? 'bg-white dark:bg-gray-700'
+                                            : 'hover:bg-gray-200 dark:hover:bg-gray-600'
+                                    }`}
+                                >
+                                    Expenses
+                                </button>
+                            </div>
+                        </div>
                     </div>
+                </header>
+
+                <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
 
                     {/* Summary Cards */}
                     <div className="grid auto-rows-min gap-4 md:grid-cols-4">
@@ -1182,8 +1185,8 @@ export default function Index({
                                 <div className="text-sm text-muted-foreground">
                                     Based on your income history and distribution patterns
                                 </div>
-                                <Link 
-                                    href={route('income-analysis')} 
+                                <Link
+                                    href={route('statistics.income-analysis')}
                                     className="text-blue-600 dark:text-blue-400 hover:underline flex items-center"
                                 >
                                     View detailed analysis
