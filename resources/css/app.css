@@ -7,17 +7,109 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Hide scrollbars while maintaining functionality */
+/* Enhanced Floating Scrollbar System with JavaScript Support */
 ::-webkit-scrollbar {
-    width: 0;
-    height: 0;
-    display: none;
+    width: 8px;
+    height: 8px;
 }
 
-/* Firefox scrollbar */
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+    border: none;
+    min-height: 30px;
+    opacity: 0;
+    transform: scaleX(0.5);
+    transform-origin: right center;
+    transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    opacity: 1;
+    background: rgba(0, 0, 0, 0.4);
+    transform: scaleX(0.8);
+}
+
+::-webkit-scrollbar-thumb:active {
+    opacity: 1;
+    background: rgba(0, 0, 0, 0.6);
+    transform: scaleX(1);
+}
+
+::-webkit-scrollbar-corner {
+    background: transparent;
+}
+
+/* JavaScript-enhanced scrollbar visibility */
+.floating-scrollbar-js .scrollbar-visible::-webkit-scrollbar-thumb {
+    opacity: 1 !important;
+    transform: scaleX(0.8) !important;
+}
+
+.floating-scrollbar-js .scrollbar-hidden::-webkit-scrollbar-thumb {
+    opacity: 0 !important;
+    transform: scaleX(0.5) !important;
+}
+
+/* Fallback hover states when JS is not available */
+html:not(.floating-scrollbar-js) *:hover::-webkit-scrollbar-thumb {
+    opacity: 1 !important;
+    transform: scaleX(0.8) !important;
+}
+
+/* Dark mode scrollbar */
+.dark ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.4);
+}
+
+.dark ::-webkit-scrollbar-thumb:active {
+    background: rgba(255, 255, 255, 0.6);
+}
+
+/* Dark mode with JavaScript classes */
+.dark .floating-scrollbar-js .scrollbar-visible::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3) !important;
+}
+
+/* Firefox scrollbar with fade effect */
 * {
-    scrollbar-width: none;
-    -ms-overflow-style: none;
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+    scroll-behavior: smooth;
+}
+
+.dark * {
+    scrollbar-color: transparent transparent;
+}
+
+/* Show scrollbar on hover for Firefox */
+.floating-scrollbar-js .scrollbar-visible {
+    scrollbar-color: rgba(0, 0, 0, 0.3) transparent;
+}
+
+.dark .floating-scrollbar-js .scrollbar-visible {
+    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+}
+
+/* Fallback hover for Firefox when JS is disabled */
+html:not(.floating-scrollbar-js) .overflow-auto:hover,
+html:not(.floating-scrollbar-js) .overflow-y-auto:hover,
+html:not(.floating-scrollbar-js) .overflow-x-auto:hover {
+    scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+}
+
+html:not(.floating-scrollbar-js) .dark .overflow-auto:hover,
+html:not(.floating-scrollbar-js) .dark .overflow-y-auto:hover,
+html:not(.floating-scrollbar-js) .dark .overflow-x-auto:hover {
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
 }
 
 /* Base HTML/Body styles */
@@ -56,11 +148,61 @@ body, div, pre, code, textarea, .overflow-auto, .overflow-y-auto, .overflow-x-au
     overflow-anchor: none;
 }
 
-/* Optional: Make scrollbar fade in when hovering scrollable area */
-.overflow-auto:not(:hover)::-webkit-scrollbar-thumb,
-.overflow-y-auto:not(:hover)::-webkit-scrollbar-thumb,
-.overflow-x-auto:not(:hover)::-webkit-scrollbar-thumb {
-    background-color: rgba(136, 136, 136, 0.2);
+/* Enhanced scrollbar for specific components */
+.overflow-auto, .overflow-y-auto, .overflow-x-auto {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+}
+
+.overflow-auto::-webkit-scrollbar-thumb,
+.overflow-y-auto::-webkit-scrollbar-thumb,
+.overflow-x-auto::-webkit-scrollbar-thumb {
+    min-height: 30px;
+    border-radius: 4px;
+}
+
+.overflow-auto::-webkit-scrollbar-track,
+.overflow-y-auto::-webkit-scrollbar-track,
+.overflow-x-auto::-webkit-scrollbar-track {
+    margin: 1px;
+    border-radius: 4px;
+}
+
+/* Specific scrollbar styling for containers */
+.scrollable-container,
+[data-radix-scroll-area-viewport] {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+}
+
+.scrollable-container::-webkit-scrollbar,
+[data-radix-scroll-area-viewport]::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.scrollable-container::-webkit-scrollbar-thumb,
+[data-radix-scroll-area-viewport]::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.dark .scrollable-container::-webkit-scrollbar-thumb,
+.dark [data-radix-scroll-area-viewport]::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.scrollable-container:hover::-webkit-scrollbar-thumb,
+[data-radix-scroll-area-viewport]:hover::-webkit-scrollbar-thumb {
+    opacity: 1;
+}
+
+/* Performance optimization for scrollable areas */
+.scrollable-container {
+    contain: layout style paint;
+    will-change: scroll-position;
 }
 
 /* DaisyUI theme variables to custom CSS variables mapping for compatibility */
@@ -298,4 +440,33 @@ body, div, pre, code, textarea, .overflow-auto, .overflow-y-auto, .overflow-x-au
 
 .ReactCrop__crop-selection {
   box-shadow: 0 0 0 9999em rgba(255, 255, 255, 0.3);
+}
+
+/* Custom scrollbar for code blocks and textareas */
+pre::-webkit-scrollbar,
+code::-webkit-scrollbar,
+textarea::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+pre::-webkit-scrollbar-thumb,
+code::-webkit-scrollbar-thumb,
+textarea::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.dark pre::-webkit-scrollbar-thumb,
+.dark code::-webkit-scrollbar-thumb,
+.dark textarea::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+pre:hover::-webkit-scrollbar-thumb,
+code:hover::-webkit-scrollbar-thumb,
+textarea:hover::-webkit-scrollbar-thumb {
+    opacity: 1;
 }

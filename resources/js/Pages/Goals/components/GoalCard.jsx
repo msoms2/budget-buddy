@@ -32,7 +32,7 @@ export default function GoalCard({ goal, onEdit }) {
           <div>
             <CardTitle className="text-xl">{goal.title}</CardTitle>
             <p className="text-sm text-muted-foreground mt-1">
-              {goal.category?.name || 'No Category'}
+              {goal.category?.name || 'No Income Category'}
             </p>
           </div>
           <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(goal.status)}`}>

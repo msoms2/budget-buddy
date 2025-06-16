@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Goal;
 use App\Models\GoalTransaction;
-use App\Models\ExpenseCategory;
+use App\Models\EarningCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
@@ -15,41 +15,23 @@ class GoalController extends Controller
 {
     public function index(Request $request)
     {
-        // Get expense categories (main and sub)
-        $expenseCategories = ExpenseCategory::where('user_id', Auth::id())
-            ->orderBy('name')
-            ->get();
-        
-        // Get income categories (main and sub)
-        $earningCategories = \App\Models\EarningCategory::where('user_id', Auth::id())
+        // Get income categories (main and sub) only
+        $earningCategories = EarningCategory::where('user_id', Auth::id())
             ->orderBy('name')
             ->get();
 
-        // Organize categories into required format
-        $mainCategories = collect([])
-            ->concat($expenseCategories->whereNull('parent_id')->map(function($cat) {
-                $cat->type = 'expense';
-                return $cat;
-            }))
-            ->concat($earningCategories->whereNull('parent_id')->map(function($cat) {
+        // Organize categories into required format - only income categories
+        $mainCategories = $earningCategories->whereNull('parent_id')
+            ->map(function($cat) {
                 $cat->type = 'income';
                 return $cat;
-            }))
+            })
             ->sortBy('name')
             ->values();
 
-        // Organize subcategories by parent
+        // Organize subcategories by parent - only income subcategories
         $subcategories = [];
         
-        // Add expense subcategories
-        foreach($expenseCategories->whereNotNull('parent_id') as $sub) {
-            if (!isset($subcategories[$sub->parent_id])) {
-                $subcategories[$sub->parent_id] = [];
-            }
-            $subcategories[$sub->parent_id][] = $sub;
-        }
-        
-        // Add income subcategories
         foreach($earningCategories->whereNotNull('parent_id') as $sub) {
             if (!isset($subcategories[$sub->parent_id])) {
                 $subcategories[$sub->parent_id] = [];
@@ -77,41 +59,23 @@ class GoalController extends Controller
 
     public function create()
     {
-        // Get expense categories (main and sub)
-        $expenseCategories = ExpenseCategory::where('user_id', Auth::id())
-            ->orderBy('name')
-            ->get();
-        
-        // Get income categories (main and sub)
-        $earningCategories = \App\Models\EarningCategory::where('user_id', Auth::id())
+        // Get income categories (main and sub) only
+        $earningCategories = EarningCategory::where('user_id', Auth::id())
             ->orderBy('name')
             ->get();
 
-        // Organize categories into required format
-        $mainCategories = collect([])
-            ->concat($expenseCategories->whereNull('parent_id')->map(function($cat) {
-                $cat->type = 'expense';
-                return $cat;
-            }))
-            ->concat($earningCategories->whereNull('parent_id')->map(function($cat) {
+        // Organize categories into required format - only income categories
+        $mainCategories = $earningCategories->whereNull('parent_id')
+            ->map(function($cat) {
                 $cat->type = 'income';
                 return $cat;
-            }))
+            })
             ->sortBy('name')
             ->values();
 
-        // Organize subcategories by parent
+        // Organize subcategories by parent - only income subcategories
         $subcategories = [];
         
-        // Add expense subcategories
-        foreach($expenseCategories->whereNotNull('parent_id') as $sub) {
-            if (!isset($subcategories[$sub->parent_id])) {
-                $subcategories[$sub->parent_id] = [];
-            }
-            $subcategories[$sub->parent_id][] = $sub;
-        }
-        
-        // Add income subcategories
         foreach($earningCategories->whereNotNull('parent_id') as $sub) {
             if (!isset($subcategories[$sub->parent_id])) {
                 $subcategories[$sub->parent_id] = [];
@@ -131,7 +95,7 @@ class GoalController extends Controller
             'title' => 'required|string|max:255',
             'target_amount' => 'required|numeric|min:0',
             'target_date' => 'required|date|after:today',
-            'category_id' => 'nullable|exists:expense_categories,id',
+            'category_id' => 'nullable|exists:earning_categories,id',
             'description' => 'nullable|string',
         ]);
 
@@ -152,20 +116,20 @@ class GoalController extends Controller
             ->orderBy('transaction_date', 'desc')
             ->get();
         
-        // Get expenses in the same category (if goal has a category)
-        $categoryExpenses = collect([]);
+        // Get earnings in the same category (if goal has a category)
+        $categoryEarnings = collect([]);
         if ($goal->category_id) {
-            $categoryExpenses = \App\Models\Expense::where('user_id', Auth::id())
-                ->where('subcategory_id', $goal->category_id) // Using subcategory_id which links to ExpenseCategory
+            $categoryEarnings = \App\Models\Earning::where('user_id', Auth::id())
+                ->where('subcategory_id', $goal->category_id) // Using subcategory_id which links to EarningCategory
                 ->orderBy('date', 'desc')
                 ->get()
-                ->map(function ($expense) {
+                ->map(function ($earning) {
                     return [
-                        'id' => 'exp_' . $expense->id,
-                        'amount' => $expense->amount,
-                        'transaction_date' => $expense->date,
-                        'notes' => $expense->name . ' (Category Expense)',
-                        'is_category_expense' => true
+                        'id' => 'earn_' . $earning->id,
+                        'amount' => $earning->amount,
+                        'transaction_date' => $earning->date,
+                        'notes' => $earning->name . ' (Category Earning)',
+                        'is_category_earning' => true
                     ];
                 });
         }
@@ -177,15 +141,15 @@ class GoalController extends Controller
                 'amount' => $transaction->amount,
                 'transaction_date' => $transaction->transaction_date,
                 'notes' => $transaction->notes,
-                'is_category_expense' => false
+                'is_category_earning' => false
             ];
-        })->concat($categoryExpenses)
+        })->concat($categoryEarnings)
         ->sortByDesc('transaction_date')
         ->values();
         
-        // Calculate the total progress including both direct transactions and category expenses
+        // Calculate the total progress including both direct transactions and category earnings
         $directAmount = $goalTransactions->sum('amount');
-        $categoryAmount = $categoryExpenses->sum('amount');
+        $categoryAmount = $categoryEarnings->sum('amount');
         $totalAmount = $directAmount + $categoryAmount;
         $totalProgressPercentage = $goal->target_amount > 0 
             ? min(100, round(($totalAmount / $goal->target_amount) * 100)) 
@@ -207,41 +171,23 @@ class GoalController extends Controller
     {
         Gate::authorize('view', $goal);
         
-        // Get expense categories (main and sub)
-        $expenseCategories = ExpenseCategory::where('user_id', Auth::id())
-            ->orderBy('name')
-            ->get();
-        
-        // Get income categories (main and sub)
+        // Get income categories (main and sub) only
         $earningCategories = \App\Models\EarningCategory::where('user_id', Auth::id())
             ->orderBy('name')
             ->get();
 
-        // Organize categories into required format
-        $mainCategories = collect([])
-            ->concat($expenseCategories->whereNull('parent_id')->map(function($cat) {
-                $cat->type = 'expense';
-                return $cat;
-            }))
-            ->concat($earningCategories->whereNull('parent_id')->map(function($cat) {
+        // Organize categories into required format - only income categories
+        $mainCategories = $earningCategories->whereNull('parent_id')
+            ->map(function($cat) {
                 $cat->type = 'income';
                 return $cat;
-            }))
+            })
             ->sortBy('name')
             ->values();
 
-        // Organize subcategories by parent
+        // Organize subcategories by parent - only income subcategories
         $subcategories = [];
         
-        // Add expense subcategories
-        foreach($expenseCategories->whereNotNull('parent_id') as $sub) {
-            if (!isset($subcategories[$sub->parent_id])) {
-                $subcategories[$sub->parent_id] = [];
-            }
-            $subcategories[$sub->parent_id][] = $sub;
-        }
-        
-        // Add income subcategories
         foreach($earningCategories->whereNotNull('parent_id') as $sub) {
             if (!isset($subcategories[$sub->parent_id])) {
                 $subcategories[$sub->parent_id] = [];
@@ -269,7 +215,7 @@ class GoalController extends Controller
             'title' => 'sometimes|string|max:255',
             'target_amount' => 'sometimes|numeric|min:0',
             'target_date' => 'sometimes|date|after:today',
-            'category_id' => 'nullable|exists:expense_categories,id',
+            'category_id' => 'nullable|exists:earning_categories,id',
             'description' => 'nullable|string',
             'status' => ['sometimes', Rule::in(['active', 'completed', 'cancelled'])],
         ]);
@@ -305,23 +251,23 @@ class GoalController extends Controller
             'user_id' => auth()->id()
         ]);
 
-        // If the goal has a category, also create a regular expense
+        // If the goal has a category, also create a regular earning
         if ($goal->category_id) {
-            // First get the expense category to ensure we have a valid category_id
-            $expenseCategory = \App\Models\ExpenseCategory::find($goal->category_id);
+            // First get the earning category to ensure we have a valid category_id
+            $earningCategory = \App\Models\EarningCategory::find($goal->category_id);
             
             // Get the default currency
             $defaultCurrency = \App\Models\Currency::getBase();
             
-            // Only create the expense if we have a valid parent_id
-            if ($expenseCategory && $expenseCategory->parent_id) {
-                \App\Models\Expense::create([
+            // Only create the earning if we have a valid parent_id
+            if ($earningCategory && $earningCategory->parent_id) {
+                \App\Models\Earning::create([
                     'name' => $goal->title . ' - Goal Progress',
                     'amount' => $validated['amount'],
-                    'description' => $validated['notes'] ?? 'Goal progress payment',
+                    'description' => $validated['notes'] ?? 'Goal progress earning',
                     'date' => now(),
                     'user_id' => auth()->id(),
-                    'category_id' => $expenseCategory->parent_id,
+                    'category_id' => $earningCategory->parent_id,
                     'subcategory_id' => $goal->category_id,
                     'currency_id' => $defaultCurrency->id, // Add the currency_id
                 ]);

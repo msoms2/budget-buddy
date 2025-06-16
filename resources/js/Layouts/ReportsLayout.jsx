@@ -8,21 +8,23 @@ import {
     SidebarMenuItem,
     SidebarMenuButton,
 } from "@/components/ui/sidebar";
-import { 
-    Breadcrumb, 
-    BreadcrumbItem, 
-    BreadcrumbLink, 
-    BreadcrumbList, 
-    BreadcrumbPage, 
-    BreadcrumbSeparator 
+import {
+    Breadcrumb,
+    BreadcrumbItem,
+    BreadcrumbLink,
+    BreadcrumbList,
+    BreadcrumbPage,
+    BreadcrumbSeparator
 } from "@/components/ui/breadcrumb";
 import { Separator } from "@/components/ui/separator";
+import FloatingScrollbar from '@/components/FloatingScrollbar';
 
 export default function ReportsLayout({ children }) {
     const { url } = usePage();
     
     return (
         <SidebarProvider>
+            <FloatingScrollbar />
             <AppSidebar />
             
             <SidebarInset className="bg-background">
@@ -40,7 +42,7 @@ export default function ReportsLayout({ children }) {
                                         {url === route('reports.dashboard') && 'Dashboard'}
                                         {url === route('reports.transactions') && 'Transaction Reports'}
                                         {url === route('reports.comparison') && 'Income vs Expenses'}
-                                        {url === route('reports.budget-analysis') && 'Budget Analysis'} 
+                                        {url === route('reports.budget-analysis') && 'Budget Analysis'}
                                         {url === route('reports.tag-analysis') && 'Tag Analysis'}
                                         {url === route('reports.payment-method-analysis') && 'Payment Methods'}
                                         {url === route('reports.forecast') && 'Financial Forecast'}

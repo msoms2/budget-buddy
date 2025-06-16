@@ -107,16 +107,16 @@ export default function GoalForm({ goal, mainCategories, subcategories, mode = '
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="category">Category</Label>
+            <Label htmlFor="category">Income Category</Label>
             <Select
               value={data.category_id}
               onValueChange={value => setData('category_id', value)}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select a category" />
+                <SelectValue placeholder="Select an income category" />
               </SelectTrigger>
               <SelectContent className="max-h-[300px]">
-                <SelectItem value="none">No Category</SelectItem>
+                <SelectItem value="none">No Income Category</SelectItem>
                 
                 {mainCategories && mainCategories.map(mainCategory => (
                   <SelectGroup key={mainCategory.id}>

@@ -7,6 +7,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/toaster';
 import { NotificationBell } from '@/Components/NotificationBell';
+import FloatingScrollbar from '@/components/FloatingScrollbar';
 
 export default function AuthenticatedLayout({ children }) {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -25,6 +26,7 @@ export default function AuthenticatedLayout({ children }) {
 
     return (
         <div className="min-h-screen bg-background">
+            <FloatingScrollbar />
             <SidebarProvider
                 defaultOpen={isSidebarOpen}
                 open={isSidebarOpen}

@@ -1,5 +1,6 @@
 import './bootstrap';
 import '../css/app.css';
+import './lib/floating-scrollbar.js';
 
 import React from 'react';
 import { createRoot } from 'react-dom/client';

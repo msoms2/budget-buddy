@@ -191,7 +191,8 @@ class User extends Authenticatable
         
         return [
             'total_expenses' => $totalExpenses,
-            'total_earnings' => $totalEarnings,
+            'total_income' => $totalEarnings,
+            'total_earnings' => $totalEarnings, // Keep for backward compatibility
             'net_worth' => $totalEarnings - $totalExpenses,
             'average_expense' => $this->expenses()->avg('amount') ?? 0,
             'average_earning' => $this->earnings()->avg('amount') ?? 0,

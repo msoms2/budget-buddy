@@ -41,7 +41,7 @@ class Goal extends Model
 
     public function category()
     {
-        return $this->belongsTo(ExpenseCategory::class, 'category_id');
+        return $this->belongsTo(EarningCategory::class, 'category_id');
     }
 
     public function transactions()
@@ -93,30 +93,30 @@ class Goal extends Model
         // Sum direct goal transactions
         $goalTransactionsTotal = $this->transactions()->sum('amount');
         
-        // Sum expenses in the same category (if applicable)
-        $categoryExpensesTotal = 0;
+        // Sum earnings in the same category (if applicable)
+        $categoryEarningsTotal = 0;
         if ($this->category_id) {
-            $categoryExpensesTotal = \App\Models\Expense::where('user_id', $this->user_id)
+            $categoryEarningsTotal = \App\Models\Earning::where('user_id', $this->user_id)
                 ->where('subcategory_id', $this->category_id)
                 ->sum('amount');
         }
         
-        return $goalTransactionsTotal + $categoryExpensesTotal;
+        return $goalTransactionsTotal + $categoryEarningsTotal;
     }
     
     /**
      * Accessor to get the total amount including both direct goal contributions
-     * and expenses in the associated category
+     * and earnings in the associated category
      */
     public function getTotalAmountAttribute()
     {
         // Sum direct goal transactions
         $directAmount = $this->transactions()->sum('amount');
         
-        // Sum expenses in the same category (if applicable)
+        // Sum earnings in the same category (if applicable)
         $categoryAmount = 0;
         if ($this->category_id) {
-            $categoryAmount = Expense::where('user_id', $this->user_id)
+            $categoryAmount = Earning::where('user_id', $this->user_id)
                 ->where('subcategory_id', $this->category_id)
                 ->sum('amount');
         }
@@ -143,7 +143,7 @@ class Goal extends Model
     }
     
     /**
-     * Accessor to get category expenses amount only
+     * Accessor to get category earnings amount only
      */
     public function getCategoryAmountAttribute()
     {
@@ -151,7 +151,7 @@ class Goal extends Model
             return 0;
         }
         
-        return Expense::where('user_id', $this->user_id)
+        return Earning::where('user_id', $this->user_id)
             ->where('subcategory_id', $this->category_id)
             ->sum('amount');
     }

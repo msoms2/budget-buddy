@@ -310,7 +310,7 @@ export default function Show({ auth, goal, transactions }) {
                       <p className="text-lg font-bold text-blue-600 dark:text-blue-400">{formatCurrency(goal.direct_amount || 0)}</p>
                     </div>
                     <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded p-3">
-                      <p className="text-xs text-gray-600 dark:text-gray-400">Category Expenses</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">Category Earnings</p>
                       <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(goal.category_amount || 0)}</p>
                     </div>
                   </div>
