@@ -485,20 +485,23 @@ export default function AdminDashboard({ auth, stats, recentActivity }) {
                                 </div>
                             </CardHeader>
                             <CardContent className="relative space-y-4">
-                                <Button className="w-full justify-start h-auto p-4 group/action bg-gradient-to-r from-cyan-50 to-sky-50 dark:from-cyan-950/50 dark:to-sky-950/50 border-cyan-200 dark:border-cyan-800 hover:from-cyan-100 hover:to-sky-100 dark:hover:from-cyan-900/50 dark:hover:to-sky-900/50 text-slate-900 dark:text-slate-100 hover:text-cyan-900 dark:hover:text-cyan-100 transition-all duration-200" variant="outline" asChild>
-                                    <Link href={route('admin.analytics.index')} className="flex items-center gap-4">
+                                <Button
+                                    className="w-full justify-start h-auto p-4 bg-gradient-to-r from-gray-50 to-slate-50 dark:from-gray-900/50 dark:to-slate-900/50 border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-60"
+                                    variant="outline"
+                                    disabled
+                                >
+                                    <div className="flex items-center gap-4">
                                         <div className="relative">
-                                            <div className="absolute inset-0 bg-cyan-500 rounded-xl blur opacity-20"></div>
-                                            <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-cyan-600 flex items-center justify-center">
+                                            <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-gray-400 to-gray-500 flex items-center justify-center">
                                                 <BarChart3 className="h-5 w-5 text-white" />
                                             </div>
                                         </div>
                                         <div className="flex-1 text-left">
                                             <div className="font-semibold">Analytics Dashboard</div>
-                                            <div className="text-sm text-muted-foreground">View detailed platform analytics</div>
+                                            <div className="text-sm text-gray-400 dark:text-gray-500">Currently unavailable</div>
                                         </div>
-                                        <ArrowUpRightIcon className="h-5 w-5 group-hover/action:translate-x-0.5 group-hover/action:-translate-y-0.5 transition-transform" />
-                                    </Link>
+                                        <ArrowUpRightIcon className="h-5 w-5 opacity-50" />
+                                    </div>
                                 </Button>
 
                                 <Button className="w-full justify-start h-auto p-4 group/action bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/50 dark:to-indigo-950/50 border-blue-200 dark:border-blue-800 hover:from-blue-100 hover:to-indigo-100 dark:hover:from-blue-900/50 dark:hover:to-indigo-900/50 text-slate-900 dark:text-slate-100 hover:text-blue-900 dark:hover:text-blue-100 transition-all duration-200" variant="outline" asChild>

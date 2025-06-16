@@ -58,23 +58,8 @@ class CategoryController extends Controller
                 return $category;
             });
         
-        // If the user has no categories, copy the default ones from any existing user
-        if ($expenseCategories->isEmpty() && $earningCategories->isEmpty()) {
-            $this->copyDefaultCategoriesForUser($userId);
-            
-            // Fetch categories again after copying defaults
-            $expenseCategories = ExpenseCategory::where('user_id', $userId)->get()->map(function ($category) {
-                $category->type = 'expense';
-                $category->count = $category->expenses()->count();
-                return $category;
-            });
-            
-            $earningCategories = EarningCategory::where('user_id', $userId)->get()->map(function ($category) {
-                $category->type = 'earning';
-                $category->count = $category->earnings()->count();
-                return $category;
-            });
-        }
+        // Removed automatic category copying - new users should start with empty categories
+        // If users want default categories, they can manually create them or import them
 
         return Inertia::render('Categories/Index', [
             'expenseCategories' => $expenseCategories,
@@ -300,6 +285,28 @@ class CategoryController extends Controller
                 ]);
             }
         }
+    }
+
+    /**
+     * Manually copy default categories for the current user
+     * This replaces the automatic copying that was removed
+     */
+    public function copyDefaults(Request $request)
+    {
+        $userId = Auth::id();
+        
+        // Check if user already has categories
+        $existingExpenseCategories = ExpenseCategory::where('user_id', $userId)->count();
+        $existingEarningCategories = EarningCategory::where('user_id', $userId)->count();
+        
+        if ($existingExpenseCategories > 0 || $existingEarningCategories > 0) {
+            return Redirect::route('categories.index')->with('info', 'You already have categories. Default categories were not added to avoid duplicates.');
+        }
+        
+        // Use the existing method to copy default categories
+        $this->copyDefaultCategoriesForUser($userId);
+        
+        return Redirect::route('categories.index')->with('success', 'Default categories have been added to your account.');
     }
 
     /**

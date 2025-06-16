@@ -234,72 +234,6 @@ class GoalController extends Controller
         return redirect()->route('goals.index')->with('success', 'Goal deleted successfully!');
     }
 
-    public function updateProgress(Request $request, Goal $goal)
-    {
-        Gate::authorize('update', $goal);
-
-        $validated = $request->validate([
-            'amount' => 'required|numeric|min:0',
-            'notes' => 'nullable|string|max:255',
-        ]);
-
-        // Create a goal transaction
-        $transaction = $goal->transactions()->create([
-            'amount' => $validated['amount'],
-            'notes' => $validated['notes'],
-            'transaction_date' => now(),
-            'user_id' => auth()->id()
-        ]);
-
-        // If the goal has a category, also create a regular earning
-        if ($goal->category_id) {
-            // First get the earning category to ensure we have a valid category_id
-            $earningCategory = \App\Models\EarningCategory::find($goal->category_id);
-            
-            // Get the default currency
-            $defaultCurrency = \App\Models\Currency::getBase();
-            
-            // Only create the earning if we have a valid parent_id
-            if ($earningCategory && $earningCategory->parent_id) {
-                \App\Models\Earning::create([
-                    'name' => $goal->title . ' - Goal Progress',
-                    'amount' => $validated['amount'],
-                    'description' => $validated['notes'] ?? 'Goal progress earning',
-                    'date' => now(),
-                    'user_id' => auth()->id(),
-                    'category_id' => $earningCategory->parent_id,
-                    'subcategory_id' => $goal->category_id,
-                    'currency_id' => $defaultCurrency->id, // Add the currency_id
-                ]);
-            }
-        }
-
-        $goal->refresh();
-
-        // Prepare response data
-        $responseData = [
-            'transaction' => $transaction,
-            'current_amount' => $goal->current_amount,
-            'progress_percentage' => $goal->progress_percentage,
-            'total_amount' => $goal->total_amount,
-            'direct_amount' => $goal->direct_amount,
-            'category_amount' => $goal->category_amount,
-            'total_progress_percentage' => $goal->total_progress_percentage,
-        ];
-
-        // Check if this is an AJAX request
-        if ($request->wantsJson() || $request->ajax()) {
-            return response()->json([
-                'success' => true,
-                'data' => $responseData
-            ]);
-        }
-        
-        // If it's an Inertia request, redirect back with the data
-        return redirect()->back()
-            ->with('success', 'Progress updated successfully')
-            ->with('goalData', $responseData);
-    }
 
     public function getProgress(Request $request, Goal $goal)
     {
@@ -365,5 +299,14 @@ class GoalController extends Controller
             'remaining_days' => $remainingDays,
             'probability_of_success' => $probabilityOfSuccess,
         ]);
+    }
+
+    public function updateProgress(Request $request, Goal $goal)
+    {
+        Gate::authorize('update', $goal);
+
+        // This function is now disabled - progress should only come from income transactions
+        return redirect()->route('goals.show', $goal->id)
+            ->with('error', 'Manual progress updates have been disabled. Progress is automatically tracked from income transactions in the associated category.');
     }
 }

@@ -31,12 +31,35 @@ class BudgetController extends Controller
                 'enable_rollover' => $budget->rollover_enabled
             ]);
         });
-            
-        $expenseCategories = ExpenseCategory::where('user_id', Auth::id())->get();
+        
+        // Get expense categories organized hierarchically like goals    
+        $expenseCategories = ExpenseCategory::where('user_id', Auth::id())
+            ->orderBy('name')
+            ->get();
+
+        // Organize main categories
+        $mainCategories = $expenseCategories->whereNull('parent_id')
+            ->map(function($cat) {
+                $cat->type = 'expense';
+                return $cat;
+            })
+            ->sortBy('name')
+            ->values();
+
+        // Organize subcategories by parent
+        $subcategories = [];
+        foreach($expenseCategories->whereNotNull('parent_id') as $sub) {
+            if (!isset($subcategories[$sub->parent_id])) {
+                $subcategories[$sub->parent_id] = [];
+            }
+            $subcategories[$sub->parent_id][] = $sub;
+        }
             
         return Inertia::render('Budgets/Index', [
             'budgets' => $budgets,
             'expenseCategories' => $expenseCategories,
+            'mainCategories' => $mainCategories,
+            'subcategories' => $subcategories,
             'budgetMethods' => Budget::getAvailableMethods(),
             'budgetPeriods' => Budget::getAvailablePeriods(),
             'budgetTimeFrames' => Budget::getAvailableTimeFrames(),
@@ -48,10 +71,33 @@ class BudgetController extends Controller
      */
     public function create()
     {
-        $expenseCategories = ExpenseCategory::where('user_id', Auth::id())->get();
+        // Get expense categories organized hierarchically like goals    
+        $expenseCategories = ExpenseCategory::where('user_id', Auth::id())
+            ->orderBy('name')
+            ->get();
+
+        // Organize main categories
+        $mainCategories = $expenseCategories->whereNull('parent_id')
+            ->map(function($cat) {
+                $cat->type = 'expense';
+                return $cat;
+            })
+            ->sortBy('name')
+            ->values();
+
+        // Organize subcategories by parent
+        $subcategories = [];
+        foreach($expenseCategories->whereNotNull('parent_id') as $sub) {
+            if (!isset($subcategories[$sub->parent_id])) {
+                $subcategories[$sub->parent_id] = [];
+            }
+            $subcategories[$sub->parent_id][] = $sub;
+        }
         
         return Inertia::render('Budgets/Create', [
             'expenseCategories' => $expenseCategories,
+            'mainCategories' => $mainCategories,
+            'subcategories' => $subcategories,
             'budgetMethods' => Budget::getAvailableMethods(),
             'budgetPeriods' => Budget::getAvailablePeriods(),
             'budgetTimeFrames' => Budget::getAvailableTimeFrames(),

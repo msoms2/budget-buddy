@@ -471,6 +471,7 @@ Route::middleware('auth')->group(function () {
     
     // Unified category routes
     Route::resource('categories', CategoryController::class);
+    Route::post('/categories/copy-defaults', [CategoryController::class, 'copyDefaults'])->name('categories.copy-defaults');
     
     // Category management routes
     Route::get('/expense-category/{category}', [CategoryController::class, 'showExpense'])->name('expense-category.show');
@@ -489,8 +490,8 @@ Route::middleware('auth')->group(function () {
     
     // Goals routes
     Route::resource('goals', GoalController::class);
-    Route::post('/goals/{goal}/update-progress', [GoalController::class, 'updateProgress'])->name('goals.update-progress');
     Route::get('/goals/{goal}/calculate-savings', [GoalController::class, 'calculateSavings'])->name('goals.calculate-savings');
+    Route::post('/goals/{goal}/update-progress', [GoalController::class, 'updateProgress'])->name('goals.update-progress');
     
     // Savings routes
     Route::resource('savings', SavingsController::class);
@@ -539,7 +540,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
         Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('index');
         Route::get('/users', [AdminController::class, 'users'])->name('users');
-        Route::get('/users/{id}', [AdminController::class, 'showUser'])->name('users.show');
+        Route::get('/users/{user}', [AdminController::class, 'showUser'])->name('users.show');
         Route::get('/transactions', [AdminController::class, 'transactions'])->name('transactions');
         
         // User Management Routes

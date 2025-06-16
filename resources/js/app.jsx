@@ -16,9 +16,17 @@ createInertiaApp({
     resolve: (name) => resolvePageComponent(`./Pages/${name}.jsx`, import.meta.glob('./Pages/**/*.jsx')),
     setup({ el, App, props }) {
         const root = createRoot(el);
+        
+        // Extract currency data from page props if available
+        const initialCurrency = props.initialPage?.props?.currentCurrency || null;
+        const userDisplayedCurrencies = props.initialPage?.props?.auth?.user?.displayed_currencies || [];
+        
         return root.render(
             <ThemeProvider>
-                <CurrencyProvider>
+                <CurrencyProvider
+                    initialCurrency={initialCurrency}
+                    initialDisplayedCurrencies={userDisplayedCurrencies}
+                >
                     <App {...props} />
                 </CurrencyProvider>
             </ThemeProvider>

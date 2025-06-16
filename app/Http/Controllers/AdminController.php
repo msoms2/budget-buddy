@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Budget;
 use App\Models\Currency;
 use App\Models\Debt;
+use App\Models\Expense;
+use App\Models\Earning;
 use App\Models\Goal;
 use App\Models\Investment;
 use App\Models\Transaction;
@@ -364,28 +366,28 @@ class AdminController extends Controller
             switch ($module) {
                 case 'budget':
                     $response = $this->budgetAnalytics($moduleRequest);
-                    $data = $response->props['data'] ?? [];
+                    $data = $response->getData()['props']['data'] ?? [];
                     Log::debug('Budget analytics response generated');
                     break;
 
                 case 'categories':
                     $response = $this->categoriesAnalytics($moduleRequest);
-                    $data = $response->props['data'] ?? [];
+                    $data = $response->getData()['props']['data'] ?? [];
                     break;
 
                 case 'goals':
                     $response = $this->goalsAnalytics($moduleRequest);
-                    $data = $response->props['data'] ?? [];
+                    $data = $response->getData()['props']['data'] ?? [];
                     break;
 
                 case 'debt':
                     $response = $this->debtAnalytics($moduleRequest);
-                    $data = $response->props['data'] ?? [];
+                    $data = $response->getData()['props']['data'] ?? [];
                     break;
 
                 case 'investment':
                     $response = $this->investmentAnalytics($moduleRequest);
-                    $data = $response->props['data'] ?? [];
+                    $data = $response->getData()['props']['data'] ?? [];
                     break;
 
                 default:
@@ -586,20 +588,24 @@ class AdminController extends Controller
     }
 
     /**
-     * Generate timeline data from user's activities
-     *
-     * @param User $user
-     * @param int $limit Maximum number of activities to return per type
-     * @return array
-     */
-    /**
      * Display admin transactions page.
      */
-    public function transactions()
+    public function transactions(Request $request)
     {
         try {
-            // Get earnings stats
+            // Get filter parameters from request
+            $search = $request->get('search');
+            $type = $request->get('type');
+            $categoryId = $request->get('category_id');
+            $userId = $request->get('user_id');
+            $amountMin = $request->get('amount_min');
+            $amountMax = $request->get('amount_max');
+            $sortField = $request->get('sort_field', 'date');
+            $sortDirection = $request->get('sort_direction', 'desc');
+
+            // Base queries for statistics (unfiltered)
             $totalEarnings = DB::table('earnings')->count();
+            $totalExpenses = DB::table('expenses')->count();
             
             // Calculate total volume of earnings with currency conversion
             $earningsVolume = DB::table('earnings')
@@ -619,60 +625,97 @@ class AdminController extends Controller
                     ELSE expenses.amount * currencies.exchange_rate
                 END'));
 
-            // Add debug logging for volume calculations
-            Log::info('Volume calculations:', [
-                'earnings_volume' => $earningsVolume,
-                'expenses_volume' => $expensesVolume,
-                'total_volume' => ($earningsVolume ?: 0) + ($expensesVolume ?: 0)
-            ]);
-
             $totalVolume = ($earningsVolume ?: 0) + ($expensesVolume ?: 0);
 
-            // Get expenses count
-            $totalExpenses = DB::table('expenses')->count();
-
-            // Get earnings with specific columns
+            // Build earnings query with filters
             $earnings = DB::table('earnings')
                 ->join('users', 'earnings.user_id', '=', 'users.id')
                 ->leftJoin('earning_categories', 'earnings.category_id', '=', 'earning_categories.id')
                 ->leftJoin('currencies', 'earnings.currency_id', '=', 'currencies.id')
                 ->select(
                     'earnings.id',
+                    'earnings.user_id',
                     'earnings.name',
                     'earnings.amount',
                     'earnings.description',
                     'earnings.date',
                     'users.name as user_name',
-                    'earning_categories.name as category_name',
+                    'earning_categories.name as category',
                     'currencies.code as currency_code',
                     DB::raw("'income' as type")
                 );
 
-            // Get expenses with the same columns
+            // Build expenses query with filters
             $expenses = DB::table('expenses')
                 ->join('users', 'expenses.user_id', '=', 'users.id')
                 ->leftJoin('expense_categories', 'expenses.category_id', '=', 'expense_categories.id')
                 ->leftJoin('currencies', 'expenses.currency_id', '=', 'currencies.id')
                 ->select(
                     'expenses.id',
+                    'expenses.user_id',
                     'expenses.name',
                     'expenses.amount',
                     'expenses.description',
                     'expenses.date',
                     'users.name as user_name',
-                    'expense_categories.name as category_name',
+                    'expense_categories.name as category',
                     'currencies.code as currency_code',
                     DB::raw("'expense' as type")
                 );
 
-            // Create union query
-            $query = $earnings->unionAll($expenses);
+            // Apply filters to both queries
+            if ($search) {
+                $earnings->where(function($query) use ($search) {
+                    $query->where('earnings.name', 'like', '%' . $search . '%')
+                          ->orWhere('earnings.description', 'like', '%' . $search . '%')
+                          ->orWhere('users.name', 'like', '%' . $search . '%');
+                });
+                
+                $expenses->where(function($query) use ($search) {
+                    $query->where('expenses.name', 'like', '%' . $search . '%')
+                          ->orWhere('expenses.description', 'like', '%' . $search . '%')
+                          ->orWhere('users.name', 'like', '%' . $search . '%');
+                });
+            }
+
+            if ($categoryId && $categoryId !== 'all') {
+                $earnings->where('earnings.category_id', $categoryId);
+                $expenses->where('expenses.category_id', $categoryId);
+            }
+
+            if ($userId && $userId !== 'all') {
+                $earnings->where('earnings.user_id', $userId);
+                $expenses->where('expenses.user_id', $userId);
+            }
+
+            if ($amountMin) {
+                $earnings->where('earnings.amount', '>=', $amountMin);
+                $expenses->where('expenses.amount', '>=', $amountMin);
+            }
+
+            if ($amountMax) {
+                $earnings->where('earnings.amount', '<=', $amountMax);
+                $expenses->where('expenses.amount', '<=', $amountMax);
+            }
+
+            // Apply type filter
+            if ($type && $type !== 'all') {
+                if ($type === 'income') {
+                    $query = $earnings;
+                } elseif ($type === 'expense') {
+                    $query = $expenses;
+                }
+            } else {
+                // Create union query if both types are needed
+                $query = $earnings->unionAll($expenses);
+            }
             
-            // Get transactions with pagination
+            // Get transactions with pagination and sorting
             $transactions = DB::table(DB::raw("({$query->toSql()}) as t"))
                 ->mergeBindings($query)
-                ->orderBy('date', 'desc')
-                ->paginate(25);
+                ->orderBy($sortField, $sortDirection)
+                ->paginate(25)
+                ->appends($request->query());
 
             // Add statistics
             $statistics = [
@@ -682,17 +725,58 @@ class AdminController extends Controller
                 'total_volume' => $totalVolume
             ];
 
+            // Calculate recent activity (last 7 days)
+            $sevenDaysAgo = now()->subDays(7)->toDateString();
+            $recentEarnings = DB::table('earnings')
+                ->where('date', '>=', $sevenDaysAgo)
+                ->count();
+            $recentExpenses = DB::table('expenses')
+                ->where('date', '>=', $sevenDaysAgo)
+                ->count();
+            $statistics['recent_activity'] = $recentEarnings + $recentExpenses;
+
+            // Get categories for filter dropdown
+            $categories = collect()
+                ->merge(DB::table('earning_categories')->select('id', 'name')->get())
+                ->merge(DB::table('expense_categories')->select('id', 'name')->get())
+                ->unique('id');
+
+            // Get users for filter dropdown
+            $users = DB::table('users')->select('id', 'name')->get();
+
             // Add debug logging
             Log::info('Admin transactions loaded', [
                 'total_count' => $transactions->total(),
                 'current_page' => $transactions->currentPage(),
                 'per_page' => $transactions->perPage(),
-                'statistics' => $statistics
+                'statistics' => $statistics,
+                'filters_applied' => [
+                    'search' => $search,
+                    'type' => $type,
+                    'category_id' => $categoryId,
+                    'user_id' => $userId,
+                    'amount_min' => $amountMin,
+                    'amount_max' => $amountMax,
+                    'sort_field' => $sortField,
+                    'sort_direction' => $sortDirection
+                ]
             ]);
 
             return Inertia::render('Admin/Transactions', [
                 'transactions' => $transactions,
                 'statistics' => $statistics,
+                'categories' => $categories,
+                'users' => $users,
+                'filters' => [
+                    'search' => $search,
+                    'type' => $type,
+                    'category_id' => $categoryId,
+                    'user_id' => $userId,
+                    'amount_min' => $amountMin,
+                    'amount_max' => $amountMax,
+                    'sort_field' => $sortField,
+                    'sort_direction' => $sortDirection
+                ],
                 'stats' => [
                     'total' => $transactions->total(),
                     'page' => $transactions->currentPage(),
@@ -713,9 +797,8 @@ class AdminController extends Controller
         $timeline = [];
 
         // Recent Expenses
-        $expenses = Transaction::where('user_id', $user->id)
-            ->where('type', 'expense')
-            ->with('category')
+        $expenses = Expense::where('user_id', $user->id)
+            ->with(['category', 'currency'])
             ->latest()
             ->take($limit)
             ->get()
@@ -729,16 +812,15 @@ class AdminController extends Controller
                     'category' => $expense->category?->name,
                     'timestamp' => $expense->created_at,
                     'metadata' => [
-                        'currency' => $expense->currency_code
+                        'currency' => $expense->currency?->code ?? 'USD'
                     ]
                 ];
             });
         $timeline = array_merge($timeline, $expenses->toArray());
 
         // Recent Earnings
-        $earnings = Transaction::where('user_id', $user->id)
-            ->where('type', 'income')
-            ->with('category')
+        $earnings = Earning::where('user_id', $user->id)
+            ->with(['category', 'currency'])
             ->latest()
             ->take($limit)
             ->get()
@@ -752,7 +834,7 @@ class AdminController extends Controller
                     'category' => $earning->category?->name,
                     'timestamp' => $earning->created_at,
                     'metadata' => [
-                        'currency' => $earning->currency_code
+                        'currency' => $earning->currency?->code ?? 'USD'
                     ]
                 ];
             });
@@ -760,6 +842,7 @@ class AdminController extends Controller
 
         // Goals
         $goals = Goal::where('user_id', $user->id)
+            ->with('currency')
             ->latest()
             ->take($limit)
             ->get()
@@ -768,13 +851,13 @@ class AdminController extends Controller
                     'id' => 'goal-' . $goal->id,
                     'type' => 'goal',
                     'name' => 'Goal ' . ucfirst($goal->status),
-                    'description' => $goal->name,
+                    'description' => $goal->title,
                     'amount' => $goal->target_amount,
                     'timestamp' => $goal->updated_at,
                     'metadata' => [
                         'status' => $goal->status,
-                        'progress' => $goal->progress,
-                        'currency' => $goal->currency_code
+                        'progress' => $goal->progress_percentage ?? 0,
+                        'currency' => $goal->currency?->code ?? 'USD'
                     ]
                 ];
             });
@@ -782,6 +865,7 @@ class AdminController extends Controller
 
         // Budgets
         $budgets = Budget::where('user_id', $user->id)
+            ->with(['category', 'currency'])
             ->latest()
             ->take($limit)
             ->get()
@@ -790,12 +874,12 @@ class AdminController extends Controller
                     'id' => 'budget-' . $budget->id,
                     'type' => 'budget',
                     'name' => 'Budget Updated',
-                    'description' => $budget->name,
+                    'description' => $budget->category?->name ?? 'Budget',
                     'amount' => $budget->amount,
                     'timestamp' => $budget->updated_at,
                     'metadata' => [
-                        'status' => $budget->status,
-                        'currency' => $budget->currency_code
+                        'status' => $budget->status ?? 'active',
+                        'currency' => $budget->currency?->code ?? 'USD'
                     ]
                 ];
             });
@@ -839,12 +923,6 @@ class AdminController extends Controller
     }
 
     /**
-     * Display user details with timeline
-     *
-     * @param User $user
-     * @return \Inertia\Response
-     */
-    /**
      * Display users list page
      */
     public function users()
@@ -855,6 +933,31 @@ class AdminController extends Controller
                 ->select('id', 'name', 'email', 'created_at', 'last_seen')
                 ->orderBy('created_at', 'desc')
                 ->paginate(25);
+
+            // Add online status and formatted last seen to each user
+            $users->getCollection()->transform(function ($user) {
+                // Consider a user online if they were active in the last 5 minutes
+                $user->is_online = $user->last_seen && abs(now()->diffInMinutes($user->last_seen)) <= 5;
+                
+                // Format last seen for display
+                if ($user->last_seen) {
+                    $diffInMinutes = abs(now()->diffInMinutes($user->last_seen));
+                    if ($diffInMinutes < 1) {
+                        $user->last_seen_formatted = 'Just now';
+                    } elseif ($diffInMinutes < 60) {
+                        $user->last_seen_formatted = $diffInMinutes . ' minute' . ($diffInMinutes > 1 ? 's' : '') . ' ago';
+                    } elseif ($diffInMinutes < 1440) { // Less than 24 hours
+                        $hours = floor($diffInMinutes / 60);
+                        $user->last_seen_formatted = $hours . ' hour' . ($hours > 1 ? 's' : '') . ' ago';
+                    } else {
+                        $user->last_seen_formatted = $user->last_seen->format('M j, Y');
+                    }
+                } else {
+                    $user->last_seen_formatted = 'Never';
+                }
+                
+                return $user;
+            });
 
             // Calculate user statistics
             $now = now();
@@ -900,11 +1003,19 @@ class AdminController extends Controller
     {
         $timeline = $this->getUserActivityTimeline($user);
         
+        // Calculate actual transaction count from expenses and earnings
+        $expenseCount = \App\Models\Expense::where('user_id', $user->id)->count();
+        $earningCount = \App\Models\Earning::where('user_id', $user->id)->count();
+        $totalTransactions = $expenseCount + $earningCount;
+        
+        // Add online status to user
+        $user->is_online = $user->last_seen && abs(now()->diffInMinutes($user->last_seen)) <= 5;
+        
         return Inertia::render('Admin/Users/Show', [
             'user' => $user,
             'timeline' => $timeline,
             'stats' => [
-                'total_transactions' => Transaction::where('user_id', $user->id)->count(),
+                'total_transactions' => $totalTransactions,
                 'total_budgets' => Budget::where('user_id', $user->id)->count(),
                 'total_goals' => Goal::where('user_id', $user->id)->count(),
                 'last_seen' => $user->last_seen

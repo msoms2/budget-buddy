@@ -108,8 +108,8 @@ export default function NotificationSettings() {
                 const { notification_type, ...updates } = setting;
                 return axios.put(`/api/notifications/settings/${notification_type.id}`, {
                     is_enabled: updates.is_enabled,
-                    frequency: updates.frequency,
-                    channels: updates.channels
+                    frequency: updates.frequency || 'immediate', // Ensure valid frequency is set
+                    channels: updates.channels && updates.channels.length > 0 ? updates.channels : ['email', 'in_app']
                 });
             });
             
@@ -325,7 +325,7 @@ export default function NotificationSettings() {
                                                         Frequency
                                                     </Label>
                                                     <Select
-                                                        value={setting.frequency}
+                                                        value={setting.frequency || 'immediate'}
                                                         onValueChange={(frequency) => 
                                                             handleToggle(setting.notification_type_id, 'frequency', frequency)
                                                         }

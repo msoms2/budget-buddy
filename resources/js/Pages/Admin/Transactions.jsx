@@ -371,8 +371,8 @@ export default function Transactions({ auth, transactions, statistics: backendSt
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {transactions.data.map((transaction) => (
-                                        <TableRow key={transaction.id} className="hover:bg-muted/50">
+                                    {transactions.data.map((transaction, index) => (
+                                        <TableRow key={`transaction-${transaction.id}-${index}`} className="hover:bg-muted/50">
                                             <TableCell className="flex items-center gap-2">
                                                 <div className="flex items-center">
                                                     <CalendarIcon className="mr-2 h-4 w-4 text-muted-foreground" />
@@ -433,7 +433,7 @@ export default function Transactions({ auth, transactions, statistics: backendSt
                                     </p>
                                     <div className="flex gap-1">
                                         {transactions.links.map((link, i) => (
-                                            <React.Fragment key={i}>
+                                            <React.Fragment key={`${link.url || 'disabled'}-${link.label}-${i}`}>
                                                 {link.url ? (
                                                     <Button
                                                         variant={link.active ? "default" : "outline"}

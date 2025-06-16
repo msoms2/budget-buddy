@@ -84,7 +84,7 @@ import {
 } from "lucide-react";
 import BudgetModal from './Partials/BudgetModal';
 
-export default function Index({ auth, budgets, expenseCategories, budgetMethods, budgetPeriods }) {
+export default function Index({ auth, budgets, expenseCategories, mainCategories, subcategories, budgetMethods, budgetPeriods, budgetTimeFrames }) {
   const [isRolloverDialogOpen, setIsRolloverDialogOpen] = useState(false);
   const [isMethodDialogOpen, setIsMethodDialogOpen] = useState(false);
   const [showBudgetModal, setShowBudgetModal] = useState(false);
@@ -528,6 +528,8 @@ export default function Index({ auth, budgets, expenseCategories, budgetMethods,
           onClose={closeBudgetModal} 
           budget={selectedBudget}
           expenseCategories={expenseCategories}
+          mainCategories={mainCategories}
+          subcategories={subcategories}
           budgetMethods={budgetMethods}
           budgetPeriods={budgetPeriods}
         />

@@ -30,12 +30,24 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $user = $request->user();
+        $currentCurrency = null;
+        
+        if ($user) {
+            // Load currency relationship
+            $user->load(['roles', 'currency']);
+            
+            // Get user's currency or system default
+            $currentCurrency = $user->currency ?: \App\Models\Currency::where('is_default', true)->first();
+        }
+        
         return array_merge(parent::share($request), [
             'auth' => [
-                'user' => $request->user() ? $request->user()->load('roles')->toArray() : null,
+                'user' => $user ? $user->toArray() : null,
             ],
+            'currentCurrency' => $currentCurrency,
             'appUrl' => config('app.url'),
-            'settings' => $request->user() ? [
+            'settings' => $user ? [
                 'theme' => Session::get('user_theme', 'light'),
                 'language' => Session::get('user_language', 'en'),
                 'currency' => Session::get('user_currency', 'USD'),
@@ -45,7 +57,7 @@ class HandleInertiaRequests extends Middleware
                     'dashboard' => true,
                     'analyticsAndIncome' => true,
                     'categories' => true,
-                    'transactions' => true, 
+                    'transactions' => true,
                     'budgets' => true,
                     'goals' => true,
                     'debtManagement' => true,

@@ -183,7 +183,8 @@ export default function Index({ auth, settings, options, flash }) {
             label: 'Notifications', 
             icon: Bell, 
             description: 'Notification preferences',
-            color: 'text-orange-600 dark:text-orange-400'
+            color: 'text-orange-600 dark:text-orange-400',
+            disabled: true // Mark this tab as disabled/greyed out
         },
         { 
             id: 'display', 
@@ -257,8 +258,12 @@ export default function Index({ auth, settings, options, flash }) {
                                     return (
                                         <button
                                             key={tab.id}
-                                            onClick={() => setActiveTab(tab.id)}
-                                            className={`w-full flex items-center gap-3 px-3 py-2.5 text-left rounded-lg transition-all hover:bg-muted/50 ${
+                                            onClick={() => !tab.disabled && setActiveTab(tab.id)}
+                                            className={`w-full flex items-center gap-3 px-3 py-2.5 text-left rounded-lg transition-all ${
+                                                tab.disabled 
+                                                    ? 'opacity-50 cursor-not-allowed' 
+                                                    : 'hover:bg-muted/50'
+                                            } ${
                                                 isActive 
                                                     ? 'bg-muted border border-border shadow-sm' 
                                                     : 'hover:bg-muted/30'
@@ -270,7 +275,7 @@ export default function Index({ auth, settings, options, flash }) {
                                                     {tab.label}
                                                 </p>
                                                 <p className="text-xs text-muted-foreground truncate">
-                                                    {tab.description}
+                                                    {tab.disabled ? "Coming soon" : tab.description}
                                                 </p>
                                             </div>
                                             {isActive && (
@@ -314,7 +319,32 @@ export default function Index({ auth, settings, options, flash }) {
 
                                 {/* Notifications Tab */}
                                 {activeTab === 'notifications' && (
-                                    <Notifications />
+                                    <Card className="shadow-sm">
+                                        <CardHeader className="pb-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="p-2 bg-orange-100 dark:bg-orange-900/20 rounded-lg">
+                                                    <Bell className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                                                </div>
+                                                <div>
+                                                    <CardTitle className="text-xl">Notification Settings</CardTitle>
+                                                    <CardDescription>
+                                                        Configure how and when you receive notifications about your financial activity.
+                                                    </CardDescription>
+                                                </div>
+                                            </div>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <div className="py-8 text-center">
+                                                <div className="bg-orange-100 dark:bg-orange-900/20 rounded-full w-16 h-16 mx-auto flex items-center justify-center mb-4">
+                                                    <Bell className="h-8 w-8 text-orange-600 dark:text-orange-400" />
+                                                </div>
+                                                <h3 className="text-lg font-semibold mb-2">Notification Settings Coming Soon</h3>
+                                                <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto">
+                                                    We're working on enhancing your notification experience. This feature will be available in a future update.
+                                                </p>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
                                 )}
 
                                 {/* Display Tab */}

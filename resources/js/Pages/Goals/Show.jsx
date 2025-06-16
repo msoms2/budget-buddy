@@ -14,7 +14,6 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import SavingsCalculator from './components/SavingsCalculator';
-import ProgressModal from './components/ProgressModal';
 import { AppSidebar } from "@/components/app-sidebar";
 import {
   Breadcrumb,
@@ -33,7 +32,6 @@ import {
 import {
   CalendarIcon,
   TargetIcon,
-  PlusIcon,
   ArrowLeftIcon,
   ClockIcon,
   CheckCircleIcon,
@@ -47,8 +45,6 @@ import {
 } from 'lucide-react';
 
 export default function Show({ auth, goal, transactions }) {
-  const [showProgressModal, setShowProgressModal] = useState(false);
-  const [progressCounter, setProgressCounter] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const transactionsPerPage = 6; // Show 6 transactions per page
   const { formatCurrency } = useCurrency();
@@ -89,13 +85,6 @@ export default function Show({ auth, goal, transactions }) {
   const progressPercentage = goal.total_progress_percentage || Math.round((goal.current_amount / goal.target_amount) * 100);
   const daysRemaining = getDaysRemaining();
   
-  const openProgressModal = () => {
-    setShowProgressModal(true);
-  };
-
-  const closeProgressModal = () => {
-    setShowProgressModal(false);
-  };
 
   // Get appropriate icon and color based on goal status
   const getStatusDetails = () => {
@@ -340,20 +329,10 @@ export default function Show({ auth, goal, transactions }) {
                       <div>
                         <CardTitle>Transaction History</CardTitle>
                         <CardDescription>
-                          Record of contributions to your goal
+                          Progress is automatically tracked from income transactions in the associated category
                         </CardDescription>
                       </div>
                     </div>
-                    {goal.status === 'active' && (
-                      <Button 
-                        size="sm" 
-                        className="bg-blue-600 hover:bg-blue-700 gap-1"
-                        onClick={openProgressModal}
-                      >
-                        <PlusIcon className="h-4 w-4 mr-1" />
-                        Add Progress
-                      </Button>
-                    )}
                   </div>
                 </CardHeader>
                 <CardContent className="overflow-auto min-h-0">
@@ -401,17 +380,20 @@ export default function Show({ auth, goal, transactions }) {
                       </div>
                       <h3 className="text-base font-semibold mb-1">No progress recorded yet</h3>
                       <p className="text-sm text-gray-500 max-w-md mx-auto mb-4">
-                        Start tracking your progress towards this goal by adding your first contribution.
+                        Progress is automatically tracked when you record income transactions in the associated category.
                       </p>
-                      {goal.status === 'active' && (
-                        <Button 
-                          size="sm" 
-                          className="bg-blue-600 hover:bg-blue-700"
-                          onClick={openProgressModal}
-                        >
-                          <PlusIcon className="h-4 w-4 mr-1" />
-                          Add First Contribution
-                        </Button>
+                      {goal.category ? (
+                        <div className="bg-green-50 border border-green-200 rounded-md p-3 mx-auto max-w-md">
+                          <p className="text-sm text-green-700">
+                            <span className="font-medium">Tip:</span> Add income to category <span className="font-medium">{goal.category.name}</span> to automatically update progress.
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="bg-amber-50 border border-amber-200 rounded-md p-3 mx-auto max-w-md">
+                          <p className="text-sm text-amber-700">
+                            <span className="font-medium">Note:</span> This goal is not linked to any category. Consider editing the goal to link it to an income category.
+                          </p>
+                        </div>
                       )}
                     </div>
                   )}
@@ -444,21 +426,12 @@ export default function Show({ auth, goal, transactions }) {
 
             <div className="md:col-span-1">
               {/* SavingsCalculator already has h-full and flex-col applied internally */}
-              <SavingsCalculator 
-                goalId={goal.id} 
-                isCompleted={goal.status === 'completed'} 
-                progressCounter={progressCounter}
+              <SavingsCalculator
+                goalId={goal.id}
+                isCompleted={goal.status === 'completed'}
               />
             </div>
           </div>
-
-          {/* Progress Modal - Initially hidden */}
-          <ProgressModal 
-            isOpen={showProgressModal}
-            onClose={closeProgressModal}
-            goal={goal}
-            onSuccessfulSubmit={() => setProgressCounter(prevCounter => prevCounter + 1)}
-          />
         </div>
       </SidebarInset>
     </SidebarProvider>

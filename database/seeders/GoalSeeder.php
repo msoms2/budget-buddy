@@ -6,14 +6,14 @@ use Illuminate\Database\Seeder;
 use App\Models\User;
 use App\Models\Goal;
 use App\Models\GoalTransaction;
-use App\Models\ExpenseCategory;
+use App\Models\EarningCategory;
 
 class GoalSeeder extends Seeder
 {
     public function run(): void
     {
         $users = User::all();
-        $categories = ExpenseCategory::all();
+        $categories = EarningCategory::all();
         
         // Define date ranges for 2 years of data
         $twoYearsAgo = now()->subYears(2);

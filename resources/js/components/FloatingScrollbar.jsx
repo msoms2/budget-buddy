@@ -257,19 +257,31 @@ export default function FloatingScrollbar() {
                 clearTimeout(hoverTimer);
             }
 
-            // Clear all element timers
-            elementTimers.clear();
+            // Clear all element timers - WeakMap doesn't have clear() method
+            // We need to clear timers for elements we're tracking
+            scrollElements.forEach(element => {
+                const timer = elementTimers.get(element);
+                if (timer) {
+                    clearTimeout(timer);
+                    elementTimers.delete(element);
+                }
+            });
             
             observer.disconnect();
             window.removeEventListener('scroll', handleDocumentScroll);
             
-            // Remove event listeners from all elements
-            const allElements = document.querySelectorAll('*');
-            allElements.forEach(element => {
-                element.removeEventListener('scroll', handleScroll);
-                element.removeEventListener('mouseenter', handleMouseEnter);
-                element.removeEventListener('mouseleave', handleMouseLeave);
+            // Remove event listeners from all elements that have them
+            // Instead of querying all elements, clean up elements we know have listeners
+            scrollElements.forEach(element => {
+                if (element && document.contains(element)) {
+                    element.removeEventListener('scroll', handleScroll);
+                    element.removeEventListener('mouseenter', handleMouseEnter);
+                    element.removeEventListener('mouseleave', handleMouseLeave);
+                }
             });
+            
+            // Clear the scroll elements set
+            scrollElements.clear();
         };
     }, []);
 

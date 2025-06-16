@@ -123,6 +123,28 @@ class Earning extends Model
             }
         });
 
+        // Update linked goals when a new earning is created
+        static::created(function ($earning) {
+            // Find all goals that use this category
+            if ($earning->subcategory_id) {
+                $goals = Goal::where('user_id', $earning->user_id)
+                    ->where('category_id', $earning->subcategory_id)
+                    ->where('status', 'active')
+                    ->get();
+                
+                // Goals are already automatically updated through the relationship
+                // but we'll update the status if needed
+                foreach ($goals as $goal) {
+                    // Check if the goal has reached or exceeded its target
+                    $totalAmount = $goal->getTotalAmountAttribute();
+                    if ($totalAmount >= $goal->target_amount && $goal->status !== 'completed') {
+                        $goal->status = 'completed';
+                        $goal->save();
+                    }
+                }
+            }
+        });
+
         // Update currency if user changes their default
         static::updating(function ($earning) {
             // Only auto-update currency if it wasn't explicitly set in this update

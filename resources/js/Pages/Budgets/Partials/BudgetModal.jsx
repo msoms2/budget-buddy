@@ -20,14 +20,16 @@ import { Calendar } from '@/components/ui/calendar';
 import { 
     Select,
     SelectContent,
+    SelectGroup,
     SelectItem,
+    SelectLabel,
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { XIcon, CheckIcon, CalendarIcon } from 'lucide-react';
 
-export default function BudgetModal({ isOpen, onClose, budget = null, expenseCategories = [], budgetMethods = {}, budgetPeriods = {} }) {
+export default function BudgetModal({ isOpen, onClose, budget = null, expenseCategories = [], mainCategories = [], subcategories = {}, budgetMethods = {}, budgetPeriods = {} }) {
     // Initialize form with existing data if editing, otherwise use defaults
     const { data, setData, post, patch, processing, errors, reset } = useForm({
         name: budget?.name || '',
@@ -241,13 +243,47 @@ export default function BudgetModal({ isOpen, onClose, budget = null, expenseCat
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select a category" />
                                 </SelectTrigger>
-                                <SelectContent>
+                                <SelectContent className="max-h-[300px]">
                                     <SelectItem value="none">General (No Category)</SelectItem>
-                                    {categoriesToUse.map((category) => (
-                                        <SelectItem key={category.id} value={category.id.toString()}>
-                                            {category.name}
-                                        </SelectItem>
+                                    
+                                    {/* Expense Categories and Subcategories */}
+                                    {mainCategories?.map(mainCategory => (
+                                        <React.Fragment key={mainCategory.id}>
+                                            <SelectItem
+                                                value={mainCategory.id.toString()}
+                                                className="font-medium"
+                                            >
+                                                {mainCategory.name}
+                                            </SelectItem>
+                                            
+                                            {subcategories?.[mainCategory.id]?.map(subcategory => (
+                                                <SelectItem
+                                                    key={`expense-${mainCategory.id}-${subcategory.id}`}
+                                                    value={subcategory.id.toString()}
+                                                    className="pl-6"
+                                                >
+                                                    {subcategory.name}
+                                                </SelectItem>
+                                            ))}
+                                        </React.Fragment>
                                     ))}
+
+                                    {/* Other Categories */}
+                                    {subcategories?.null && subcategories.null.length > 0 && (
+                                        <React.Fragment>
+                                            <SelectLabel className="font-medium text-gray-700 dark:text-gray-300 mt-2">
+                                                Other
+                                            </SelectLabel>
+                                            {subcategories.null.map(subcategory => (
+                                                <SelectItem
+                                                    key={`other-${subcategory.id}`}
+                                                    value={subcategory.id.toString()}
+                                                >
+                                                    {subcategory.name}
+                                                </SelectItem>
+                                            ))}
+                                        </React.Fragment>
+                                    )}
                                 </SelectContent>
                             </Select>
                             {errors.category_id && <p className="text-sm text-red-500">{errors.category_id}</p>}

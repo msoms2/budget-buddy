@@ -41,7 +41,8 @@ class NotificationSetting extends Model
         parent::boot();
 
         static::creating(function ($model) {
-            if (empty($model->channels)) {
+            // Ensure channels is an array and not empty
+            if (empty($model->channels) || !is_array($model->channels)) {
                 $model->channels = ['email', 'in_app'];
             }
         });

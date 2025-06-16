@@ -4,36 +4,50 @@ import { apiFetch, apiJsonFetch } from '@/utils/api.js';
 
 const CurrencyContext = createContext();
 
-export const CurrencyProvider = ({ children }) => {
+export const CurrencyProvider = ({ children, initialCurrency = null, initialDisplayedCurrencies = [] }) => {
     const [converting, setConverting] = useState(false);
     const [error, setError] = useState(null);
-    const [currentCurrency, setCurrentCurrency] = useState(null);
-    const [displayedCurrencies, setDisplayedCurrencies] = useState([]);
+    const [currentCurrency, setCurrentCurrency] = useState(initialCurrency);
+    const [displayedCurrencies, setDisplayedCurrencies] = useState(initialDisplayedCurrencies);
     const { toast } = useToast();
 
     useEffect(() => {
-        const fetchCurrencySettings = async () => {
-            try {
-                const currencyResponse = await apiFetch('/api/currencies/current');
-                if (!currencyResponse.ok) throw new Error('Failed to fetch currency');
-                const currencyData = await currencyResponse.json();
-                setCurrentCurrency(currencyData.currency);
-                
-                if (currencyData.user && currencyData.user.displayed_currencies) {
-                    setDisplayedCurrencies(currencyData.user.displayed_currencies);
+        // Only fetch if we don't have initial data
+        if (!initialCurrency) {
+            const fetchCurrencySettings = async () => {
+                try {
+                    const currencyResponse = await apiFetch('/api/currencies/current');
+                    if (!currencyResponse.ok) {
+                        // If 401, the user is likely not authenticated properly
+                        if (currencyResponse.status === 401) {
+                            console.warn('Currency API returned 401 - user may not be fully authenticated yet');
+                            return; // Don't show error for 401, just skip loading
+                        }
+                        throw new Error(`HTTP ${currencyResponse.status}: Failed to fetch currency`);
+                    }
+                    const currencyData = await currencyResponse.json();
+                    setCurrentCurrency(currencyData.currency);
+                    
+                    if (currencyData.user && currencyData.user.displayed_currencies) {
+                        setDisplayedCurrencies(currencyData.user.displayed_currencies);
+                    }
+                } catch (err) {
+                    console.error('Currency loading error:', err);
+                    setError('Failed to load currency settings');
+                    // Only show toast for non-401 errors
+                    if (!err.message?.includes('401')) {
+                        toast({
+                            title: "Error Loading Currency",
+                            description: "Could not load currency settings. Using default.",
+                            variant: "destructive"
+                        });
+                    }
                 }
-            } catch (err) {
-                setError('Failed to load currency settings');
-                toast({
-                    title: "Error Loading Currency",
-                    description: "Could not load currency settings. Using default.",
-                    variant: "destructive"
-                });
-            }
-        };
-        
-        fetchCurrencySettings();
-    }, [toast]);
+            };
+            
+            fetchCurrencySettings();
+        }
+    }, [toast, initialCurrency]);
 
     const convertAmount = useCallback(async (amount, fromCurrencyId, toCurrencyId) => {
         if (fromCurrencyId === toCurrencyId) return amount;

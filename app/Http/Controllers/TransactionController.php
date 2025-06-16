@@ -208,8 +208,12 @@ class TransactionController extends Controller
         // Add debug logging for stats structure
         \Illuminate\Support\Facades\Log::debug('Stats data:', ['stats' => $stats]);
 
-        // Get user's preferred currency
+        // Get user's preferred currency with proper loading
         $userCurrency = $this->getUserCurrency();
+        
+        // Get authenticated user with currency relationship
+        $user = Auth::user();
+        $user->load('currency');
 
         // Return the view with data
         return Inertia::render('Transactions/Index', [
@@ -230,6 +234,7 @@ class TransactionController extends Controller
             'currencies' => \App\Models\Currency::all(),
             'paymentMethods' => \App\Models\PaymentMethod::all(),
             'userCurrency' => $userCurrency,
+            'currentCurrency' => $user->currency ?: \App\Models\Currency::where('is_default', true)->first(),
         ]);
     }
 
