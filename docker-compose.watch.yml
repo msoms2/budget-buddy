@@ -1,0 +1,31 @@
+name: budget-buddy-watch
+
+services:
+  php:
+    develop:
+      watch:
+        # Add excludes to prevent syncing unnecessary files
+        - path: ./app
+          action: sync
+          target: /var/www/html/app
+          ignore:
+            - "*.log"
+            - "*.tmp"
+        - path: ./artisan
+          action: sync
+          target: /var/www/html/artisan
+        - path: ./tests
+          action: sync
+          target: /var/www/html/tests
+          
+  node:
+    develop:
+      watch:
+        # Add excludes to prevent unnecessary rebuilds
+        - path: ./resources/js
+          action: sync
+          target: /var/www/html/resources/js
+          ignore:
+            - "*.test.js"
+            - "*.spec.js"
+            - "**/__tests__/**"
