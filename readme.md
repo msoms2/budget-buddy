@@ -20,7 +20,7 @@ Budget Buddy ir visaptveroša personālo finanšu pārvaldības sistēma, kas iz
 ### Backend tehnoloģijas:
 - **PHP 8.2** - galvenā programmēšanas valoda
 - **Laravel 12.0** - PHP framework aplikācijas loģikai
-- **MySQL 8.0** - relāciju datubāze
+- **SQLite 3.x** - failu bāzes relāciju datubāze (noklusējuma)
 - **Redis** - kešošanas sistēma
 - **Composer** - PHP pakotņu pārvaldītājs
 
@@ -42,10 +42,8 @@ Budget Buddy ir visaptveroša personālo finanšu pārvaldības sistēma, kas iz
 
 ### Izstrādes rīki:
 - **Vite 5.1** - build tools un dev server
-- **Docker & Docker Compose** - konteinerzācija
 - **Node.js 20** - JavaScript runtime
 - **npm** - pakotņu pārvaldītājs
-- **Nginx** - web serveris
 
 ### Testēšanas rīki:
 - **PHPUnit** - PHP unit testing
@@ -78,9 +76,7 @@ Budget Buddy ir visaptveroša personālo finanšu pārvaldības sistēma, kas iz
 
 7. [Chart.js Documentation](https://www.chartjs.org/docs/) - izmantots interaktīvu grafiku un diagrammu izveidei finanšu analītikā.
 
-8. [Docker Documentation](https://docs.docker.com/) - izmantots aplikācijas konteinerzācijai un development environment uzstādīšanai.
-
-9. [MySQL 8.0 Documentation](https://dev.mysql.com/doc/) - izmantots datubāzes dizainā, optimizācijā un migrāciju izveidē.
+8. [SQLite Documentation](https://sqlite.org/docs.html) - izmantots failu bāzes datubāzes dizainā, optimizācijā un migrāciju izveidē.
 
 10. [PHP 8.2 Documentation](https://www.php.net/docs.php) - izmantots mūsdienīgu PHP iespēju lietošanā, typed properties un match expressions.
 
@@ -100,9 +96,7 @@ Budget Buddy ir visaptveroša personālo finanšu pārvaldības sistēma, kas iz
 
 18. [Redis Documentation](https://redis.io/documentation) - izmantots kešošanas stratēģiju ieviešanai un session storage.
 
-19. [Nginx Configuration Guide](https://nginx.org/en/docs/) - izmantots web servera konfigurācijai Docker vidē.
-
-20. [Laravel Testing Documentation](https://laravel.com/docs/testing) - izmantots integration testu rakstīšanai un feature testing.
+19. [Laravel Testing Documentation](https://laravel.com/docs/testing) - izmantots integration testu rakstīšanai un feature testing.
 
 21. [React Testing Library](https://testing-library.com/docs/react-testing-library/intro) - izmantots React komponenšu unit testēšanai.
 
@@ -120,96 +114,21 @@ Budget Buddy ir visaptveroša personālo finanšu pārvaldības sistēma, kas iz
 
 28. [Zod Documentation](https://zod.dev/) - izmantots runtime type checking un form validation.
 
-29. [GitHub Docker Compose Examples](https://github.com/docker/awesome-compose) - izmantots Docker Compose konfigurācijas izveidei.
-
-30. [Laravel Queue Documentation](https://laravel.com/docs/queues) - izmantots background job processing ieviešanai.
+29. [Laravel Queue Documentation](https://laravel.com/docs/queues) - izmantots background job processing ieviešanai.
 
 :information_source: :exclamation: *Visi norādītie avoti ir tikuši izmantoti projekta izstrādes procesā. Kods ir rakstīts, balstoties uz oficiālajām dokumentācijām un best practices, ievērojot copyright un licenču prasības.* :exclamation:
 
 ## Uzstādīšanas instrukcijas
 
+:information_source: **Svarīgs paziņojums:** Šajā projektā tiek izmantota SQLite datubāze uz failiem, nevis MySQL serveris. Tas nozīmē, ka nav nepieciešama atsevišķa datubāzes servera uzstādīšana vai pārvaldība - PHP automātiski izgādā SQLite atbildību.
+
 ### Priekšnosacījumi
 Pirms uzstādīšanas pārliecinieties, ka Jums ir uzstādīts:
 - Git
-- Docker & Docker Compose
-- Node.js 20+ un npm (alternatīvi, ja nevēlaties izmantot Docker)
-- PHP 8.2+ un Composer (alternatīvi, ja nevēlaties izmantot Docker)
+- PHP 8.2+ un Composer
+- Node.js 20+ un npm
 
-### Uzstādīšana ar Docker (ieteicams)
-
-1. **Klonējiet repozitoriju:**
-   ```bash
-   git clone https://github.com/[lietotājvārds]/budget-buddy-nosleguma-darbs.git
-   cd budget-buddy-nosleguma-darbs
-   ```
-
-2. **Izveidojiet `.env` failu:**
-   ```bash
-   cp .env.example .env
-   ```
-
-3. **Rediģējiet `.env` failu:**
-   Atveriet `.env` failu un pielāgojiet konfigurāciju:
-   ```env
-   APP_NAME="Budget Buddy"
-   APP_ENV=local
-   APP_KEY=
-   APP_DEBUG=true
-   APP_URL=http://localhost:8001
-
-   DB_CONNECTION=mysql
-   DB_HOST=mysql
-   DB_PORT=3306
-   DB_DATABASE=budget_buddy
-   DB_USERNAME=budget_user
-   DB_PASSWORD=budget_password
-
-   CACHE_DRIVER=redis
-   QUEUE_CONNECTION=redis
-   SESSION_DRIVER=redis
-
-   REDIS_HOST=redis
-   REDIS_PASSWORD=null
-   REDIS_PORT=6379
-   ```
-
-4. **Palaidiet Docker konteinierus:**
-   ```bash
-   docker-compose up -d
-   ```
-
-5. **Instalējiet PHP atkarības:**
-   ```bash
-   docker-compose exec php composer install
-   ```
-
-6. **Ģenerējiet aplikācijas atslēgu:**
-   ```bash
-   docker-compose exec php php artisan key:generate
-   ```
-
-7. **Veiciet datubāzes migrācijas:**
-   ```bash
-   docker-compose exec php php artisan migrate
-   ```
-
-8. **Ievietojiet sākotnējos datus (opcionāli):**
-   ```bash
-   docker-compose exec php php artisan db:seed
-   ```
-
-9. **Instalējiet Node.js atkarības un build frontend:**
-   ```bash
-   docker-compose exec node npm ci
-   docker-compose exec node npm run build
-   ```
-
-10. **Piekļūstiet lietotnei:**
-    - Galvenā lietotne: http://localhost:8001
-    - phpMyAdmin: http://localhost:8080
-    - Development server (ar HMR): http://localhost:5173
-
-### Uzstādīšana bez Docker
+### Uzstādīšana
 
 1. **Klonējiet repozitoriju:**
    ```bash
@@ -233,14 +152,11 @@ Pirms uzstādīšanas pārliecinieties, ka Jums ir uzstādīts:
    ```
 
 5. **Konfigurējiet datubāzi `.env` failā:**
-   ```env
-   DB_CONNECTION=mysql
-   DB_HOST=127.0.0.1
-   DB_PORT=3306
-   DB_DATABASE=budget_buddy
-   DB_USERNAME=[jūsu_db_lietotājs]
-   DB_PASSWORD=[jūsu_db_parole]
-   ```
+    Sistēma izmanto SQLite failu bāzi, tāpēc nav nepieciešami papildus datubāzes serveri:
+    ```env
+    DB_CONNECTION=sqlite
+    DB_DATABASE=[ceļš/uz/projektu]/database/database.sqlite
+    ```
 
 6. **Ģenerējiet lietotnes atslēgu:**
    ```bash
@@ -276,16 +192,6 @@ Pirms uzstādīšanas pārliecinieties, ka Jums ir uzstādīts:
 
 Lai strādātu development režīmā ar hot reload:
 
-**Ar Docker:**
-```bash
-# Palaist Vite dev server
-docker-compose exec node npm run dev
-
-# Palaist Laravel artisan serve atsevišķā terminal
-docker-compose exec php php artisan serve --host=0.0.0.0 --port=8000
-```
-
-**Bez Docker:**
 ```bash
 # Terminal 1 - Laravel server
 php artisan serve
@@ -297,28 +203,55 @@ npm run dev
 ### Sistēmas prasības
 - **PHP:** 8.2 vai jaunāka versija
 - **Node.js:** 20 vai jaunāka versija
-- **MySQL:** 8.0 vai jaunāka versija
+- **SQLite:** 3.x vai jaunāka versija (iekļauts PHP pēc noklusējuma)
 - **Redis:** Jebkura stabilā versija (opcionāli)
 - **RAM:** Vismaz 2GB brīvās atmiņas
 - **Disk:** Vismaz 1GB brīvās vietas
+
+:information_source: **Datubāze:** Sistēma nodrošina automātisku SQLite datubāzes faila izveidi projekta `database/` mapē. Nav nepieciešami ārējie datubāzes serveri vai konfigurācija.
 
 ### Problēmu risināšana
 
 **Ja rodas permission kļūdas:**
 ```bash
-docker-compose exec php chown -R www-data:www-data /var/www/html/storage
-docker-compose exec php chown -R www-data:www-data /var/www/html/bootstrap/cache
+chown -R $USER:$USER storage/
+chown -R $USER:$USER bootstrap/cache/
+chmod -R 755 storage/
+chmod -R 755 bootstrap/cache/
 ```
 
 **Ja neparādās frontend izmaiņas:**
 ```bash
-docker-compose exec node npm run build
-docker-compose exec php php artisan optimize:clear
+npm run build
+php artisan optimize:clear
 ```
 
 **Datubāzes problēmu gadījumā:**
 ```bash
-docker-compose exec php php artisan migrate:fresh --seed
+# Atjaunot datubāzes struktūru un ievietot sākotnējos datus
+php artisan migrate:fresh --seed
 ```
 
-:information_source: *Projekts ir optimizēts gan development, gan production vidēm. Development vidē izmantojiet hot module replacement funkcionalitāti ātrākai izstrādei. Production deployment var izmantot Docker konteinierus ar atbilstošām konfigurācijām.*
+**Ja SQLite neatrod datubāzes failu:**
+```bash
+# Pārbaudīt vai eksistē database/database.sqlite fails
+ls -la database/
+
+# Ja fails neeksistē, izveidot to manuāli
+touch database/database.sqlite
+```
+
+**SQLite pieejas tiesības:**
+```bash
+# Nodrošināt rakstīšanas tiesības SQLite failam
+chmod 664 database/database.sqlite
+```
+
+**Ja rodas cache kļūdas:**
+```bash
+php artisan cache:clear
+php artisan config:clear
+php artisan view:clear
+```
+
+:information_source: *Projekts ir optimizēts gan development, gan production vidēm. Development vidē izmantojiet hot module replacement funkcionalitāti ātrākai izstrādei. Production deploynei izveidojiet atbilstošu konfigurāciju serverī.*
