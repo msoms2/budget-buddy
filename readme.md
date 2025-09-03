@@ -1,6 +1,9 @@
 # Budget Buddy – Personālo finanšu pārvaldības sistēma
 :information_source: *Projekta nosaukums ir tieši tāds pats, kā kvalifikācijas darba nosaukums*
 
+## License
+This project has a custom license. See the [LICENSE](LICENSE) file for details.
+
 ## Projekta apraksts
 Budget Buddy ir visaptveroša personālo finanšu pārvaldības sistēma, kas izstrādāta kā PIKC "Rīgas Valsts tehnikums" kvalifikācijas darba projekts. Sistēma ļauj lietotājiem efektīvi pārvaldīt savus ienākumus, izdevumus, budžetus, finanšu mērķus, investīcijas un parādus. Gala produkts ir moderna tīmekļa lietotne ar intuitīvu lietotāja saskarni, detalizētiem pārskatiem, analītiku un automatizētiem maksājumu plānošanas rīkiem. Sistēma nodrošina pilnīgu finanšu dzīves cikla pārvaldību – no ikdienas darījumu uzskaites līdz ilgtermiņa finanšu plānošanai un investīciju portfeļa analīzei.
 

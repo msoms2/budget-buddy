@@ -6,7 +6,7 @@ import {
     SidebarInset
 } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/toaster';
-import { NotificationBell } from '@/Components/NotificationBell';
+import { NotificationBell } from '@/Components/NotificationBell.jsx';
 import FloatingScrollbar from '@/components/FloatingScrollbar';
 
 export default function AuthenticatedLayout({ children }) {
