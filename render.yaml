@@ -1,0 +1,25 @@
+# render.yaml
+services:
+  - type: web
+    name: budget-buddy
+    env: php
+    plan: free
+    buildCommand: "composer install --optimize-autoloader --no-dev && npm ci && npm run build && php artisan optimize"
+    startCommand: "php artisan serve --host=0.0.0.0 --port=$PORT"
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: false
+      - key: APP_KEY
+        sync: false # We will generate this manually
+      - key: DB_CONNECTION
+        value: sqlite
+      - key: DB_DATABASE
+        value: /var/data/database.sqlite
+      - key: NODE_VERSION
+        value: 20.11.0 # Specify your Node.js major version
+    disk:
+      name: sqlite-data
+      mountPath: /var/data
+      sizeGB: 1
