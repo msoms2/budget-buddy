@@ -18,6 +18,7 @@ RUN apt-get update && apt-get install -y \
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
 COPY composer.json composer.lock ./
+COPY . ./
 RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
 
 # 2) Build frontend assets
