@@ -30,7 +30,7 @@ class NotificationSetting extends Model
      */
     public function getNotificationTypeAttribute()
     {
-        return $this->relationLoaded('notificationType') ? $this->notificationType : null;
+        return $this->getRelationValue('notificationType');
     }
 
     /**
@@ -79,8 +79,9 @@ class NotificationSetting extends Model
     {
         return [
             'immediate' => 'Immediate',
-            'daily' => 'Daily Digest',
-            'weekly' => 'Weekly Digest'
+            'daily' => 'Daily Summary',
+            'weekly' => 'Weekly Summary',
+            'never' => 'Never'
         ];
     }
 
@@ -91,7 +92,7 @@ class NotificationSetting extends Model
     {
         return [
             'email' => 'Email',
-            'in_app' => 'In-App Notification',
+            'in_app' => 'In-App',
             'sms' => 'SMS'
         ];
     }

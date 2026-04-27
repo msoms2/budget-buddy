@@ -131,7 +131,11 @@ class NotificationSettingController extends Controller
                 'final_count' => $settings->count()
             ]);
             
-            return response()->json($settings);
+            return response()->json([
+                'settings' => $settings,
+                'channels' => NotificationSetting::getChannelOptions(),
+                'frequencies' => NotificationSetting::getFrequencyOptions()
+            ]);
             
         } catch (\Exception $e) {
             Log::error('NotificationSettings: Unexpected error in index method', [
