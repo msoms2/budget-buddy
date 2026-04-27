@@ -65,6 +65,9 @@ export default defineConfig(({ command, mode }) => {
             port: process.env.VITE_PORT || 5173,
             strictPort: true,
             origin: `http://localhost:${process.env.VITE_PORT || 5173}`,
+            allowedHosts: [
+                'budget-buddy-k6f3.onrender.com'
+            ],
             hmr: {
                 host: hmrHost,
                 protocol: hmrProtocol,
