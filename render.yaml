@@ -2,9 +2,13 @@ services:
   - type: web
     name: budget-buddy
     env: docker
-    branch: main
-    dockerfilePath: Dockerfile
-    startCommand: sh -c "php artisan serve --host=0.0.0.0 --port $PORT"
-    healthCheckPath: /
-    deployCommand: |
+    buildCommand: |
+      composer install --no-interaction --no-dev --optimize-autoloader
+      npm ci --production
+      npm run build
+    startCommand: |
       php artisan migrate --force
+      php artisan config:cache
+      php artisan route:cache  
+      php artisan view:cache
+      php artisan serve --host=0.0.0.0 --port=10000
