@@ -4,7 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Goal;
 use App\Models\User;
-use App\Models\ExpenseCategory;
+use App\Models\EarningCategory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class GoalFactory extends Factory
@@ -31,7 +31,7 @@ class GoalFactory extends Factory
             'current_amount' => $currentAmount,
             'target_date' => $this->faker->dateTimeBetween('+6 months', '+5 years'),
             'user_id' => User::factory(),
-            'category_id' => ExpenseCategory::factory(),
+            'category_id' => EarningCategory::factory(),
             'status' => $currentAmount >= $targetAmount ? 'completed' : 'active',
             'description' => $this->faker->optional(0.7)->sentence(),
         ];

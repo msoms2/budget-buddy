@@ -120,22 +120,19 @@ class ExpensesReport extends Model
         $startDate = $this->start_date;
         $endDate = $this->end_date;
 
-        $dateFormat = '%Y-%m-%d'; // Default: group by day
-        $selectFormat = 'DATE(expenses.date) as date';
+        $groupExpr = \App\Support\SqlDateFormatter::yearMonthDay('expenses.date');
 
         if ($groupBy === 'month') {
-            $dateFormat = '%Y-%m';
-            $selectFormat = "DATE_FORMAT(expenses.date, '$dateFormat') as date";
+            $groupExpr = \App\Support\SqlDateFormatter::yearMonth('expenses.date');
         } elseif ($groupBy === 'week') {
-            $dateFormat = '%Y-%u'; // ISO week format
-            $selectFormat = "DATE_FORMAT(expenses.date, '$dateFormat') as date";
+            $groupExpr = \App\Support\SqlDateFormatter::yearWeek('expenses.date');
         }
 
         $expenses = DB::table('expenses')
-            ->select(DB::raw($selectFormat), DB::raw('SUM(amount) as total'))
+            ->select(DB::raw("{$groupExpr} as date"), DB::raw('SUM(amount) as total'))
             ->where('user_id', $user->id)
             ->whereBetween('date', [$startDate, $endDate])
-            ->groupBy(DB::raw('date'))
+            ->groupBy(DB::raw($groupExpr))
             ->orderBy('date')
             ->get();
 
@@ -253,12 +250,13 @@ class ExpensesReport extends Model
         
         // Get data for the last 6 months
         $startDate = Carbon::parse($endDate)->subMonths(6)->startOfMonth();
+        $monthExpr = \App\Support\SqlDateFormatter::yearMonth('date');
         
         $monthlyData = DB::table('expenses')
-            ->select(DB::raw("DATE_FORMAT(date, '%Y-%m') as month"), DB::raw('SUM(amount) as total'))
+            ->select(DB::raw("{$monthExpr} as month"), DB::raw('SUM(amount) as total'))
             ->where('user_id', $user->id)
             ->whereBetween('date', [$startDate, $endDate])
-            ->groupBy(DB::raw("DATE_FORMAT(date, '%Y-%m')"))
+            ->groupBy(DB::raw($monthExpr))
             ->orderBy('month')
             ->get();
             
@@ -288,11 +286,12 @@ class ExpensesReport extends Model
         $startDate = Carbon::parse($endDate)->subMonths(6)->startOfMonth();
         
         // Get monthly totals
+        $monthExpr = \App\Support\SqlDateFormatter::yearMonth('date');
         $historicalData = DB::table('expenses')
-            ->select(DB::raw("DATE_FORMAT(date, '%Y-%m') as month"), DB::raw('SUM(amount) as total'))
+            ->select(DB::raw("{$monthExpr} as month"), DB::raw('SUM(amount) as total'))
             ->where('user_id', $user->id)
             ->whereBetween('date', [$startDate, $endDate])
-            ->groupBy(DB::raw("DATE_FORMAT(date, '%Y-%m')"))
+            ->groupBy(DB::raw($monthExpr))
             ->orderBy('month')
             ->get();
             

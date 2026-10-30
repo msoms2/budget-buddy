@@ -109,12 +109,13 @@ class IncomeAnalysisService
      */
     public function analyzeIncomeStability(): array
     {
+        $monthExpr = \App\Support\SqlDateFormatter::yearMonth('date');
         $monthlyEarnings = Earning::select(
-            DB::raw('DATE_FORMAT(date, "%Y-%m") as month'),
+            DB::raw("{$monthExpr} as month"),
             DB::raw('SUM(amount) as total_amount')
         )
         ->where('user_id', auth()->id())
-        ->groupBy('month')
+        ->groupBy(DB::raw($monthExpr))
         ->orderBy('month')
         ->get();
 

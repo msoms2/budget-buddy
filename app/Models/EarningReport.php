@@ -62,22 +62,19 @@ class EarningReport extends Model
         $startDate = $this->start_date;
         $endDate = $this->end_date;
 
-        $dateFormat = '%Y-%m-%d'; // Default: group by day
-        $selectFormat = 'DATE(earnings.date) as date';
+        $groupExpr = \App\Support\SqlDateFormatter::yearMonthDay('earnings.date');
 
         if ($groupBy === 'month') {
-            $dateFormat = '%Y-%m';
-            $selectFormat = "DATE_FORMAT(earnings.date, '$dateFormat') as date";
+            $groupExpr = \App\Support\SqlDateFormatter::yearMonth('earnings.date');
         } elseif ($groupBy === 'week') {
-            $dateFormat = '%Y-%u'; // ISO week format
-            $selectFormat = "DATE_FORMAT(earnings.date, '$dateFormat') as date";
+            $groupExpr = \App\Support\SqlDateFormatter::yearWeek('earnings.date');
         }
 
         $earnings = DB::table('earnings')
-            ->select(DB::raw($selectFormat), DB::raw('SUM(amount) as total'))
+            ->select(DB::raw("{$groupExpr} as date"), DB::raw('SUM(amount) as total'))
             ->where('user_id', $user->id)
             ->whereBetween('date', [$startDate, $endDate])
-            ->groupBy(DB::raw('date'))
+            ->groupBy(DB::raw($groupExpr))
             ->orderBy('date')
             ->get();
 
@@ -94,12 +91,13 @@ class EarningReport extends Model
         
         // Calculate start date based on how many months back we want to go
         $startDate = Carbon::parse($endDate)->subMonths($months)->startOfMonth();
+        $monthExpr = \App\Support\SqlDateFormatter::yearMonth('date');
         
         $monthlyData = DB::table('earnings')
-            ->select(DB::raw("DATE_FORMAT(date, '%Y-%m') as month"), DB::raw('SUM(amount) as total'))
+            ->select(DB::raw("{$monthExpr} as month"), DB::raw('SUM(amount) as total'))
             ->where('user_id', $user->id)
             ->whereBetween('date', [$startDate, $endDate])
-            ->groupBy(DB::raw("DATE_FORMAT(date, '%Y-%m')"))
+            ->groupBy(DB::raw($monthExpr))
             ->orderBy('month')
             ->get();
             
@@ -251,12 +249,13 @@ class EarningReport extends Model
         
         // Get data for the last 6 months
         $startDate = Carbon::parse($endDate)->subMonths(6)->startOfMonth();
+        $monthExpr = \App\Support\SqlDateFormatter::yearMonth('date');
         
         $monthlyData = DB::table('earnings')
-            ->select(DB::raw("DATE_FORMAT(date, '%Y-%m') as month"), DB::raw('SUM(amount) as total'))
+            ->select(DB::raw("{$monthExpr} as month"), DB::raw('SUM(amount) as total'))
             ->where('user_id', $user->id)
             ->whereBetween('date', [$startDate, $endDate])
-            ->groupBy(DB::raw("DATE_FORMAT(date, '%Y-%m')"))
+            ->groupBy(DB::raw($monthExpr))
             ->orderBy('month')
             ->get();
             
@@ -286,11 +285,12 @@ class EarningReport extends Model
         $startDate = Carbon::parse($endDate)->subMonths(6)->startOfMonth();
         
         // Get monthly totals
+        $monthExpr = \App\Support\SqlDateFormatter::yearMonth('date');
         $historicalData = DB::table('earnings')
-            ->select(DB::raw("DATE_FORMAT(date, '%Y-%m') as month"), DB::raw('SUM(amount) as total'))
+            ->select(DB::raw("{$monthExpr} as month"), DB::raw('SUM(amount) as total'))
             ->where('user_id', $user->id)
             ->whereBetween('date', [$startDate, $endDate])
-            ->groupBy(DB::raw("DATE_FORMAT(date, '%Y-%m')"))
+            ->groupBy(DB::raw($monthExpr))
             ->orderBy('month')
             ->get();
             
@@ -343,11 +343,12 @@ class EarningReport extends Model
         $endDate = $this->end_date;
         
         // Get monthly income data
+        $monthExpr = \App\Support\SqlDateFormatter::yearMonth('date');
         $monthlyData = DB::table('earnings')
-            ->select(DB::raw("DATE_FORMAT(date, '%Y-%m') as month"), DB::raw('SUM(amount) as total'))
+            ->select(DB::raw("{$monthExpr} as month"), DB::raw('SUM(amount) as total'))
             ->where('user_id', $user->id)
             ->whereBetween('date', [$startDate, $endDate])
-            ->groupBy(DB::raw("DATE_FORMAT(date, '%Y-%m')"))
+            ->groupBy(DB::raw($monthExpr))
             ->orderBy('month')
             ->get();
             
@@ -485,22 +486,24 @@ class EarningReport extends Model
         $startDate = $this->start_date;
         $endDate = $this->end_date;
         
+        $monthExpr = \App\Support\SqlDateFormatter::yearMonth('date');
+
         // Get monthly income data
         $monthlyIncome = DB::table('earnings')
-            ->select(DB::raw("DATE_FORMAT(date, '%Y-%m') as month"), DB::raw('SUM(amount) as total'))
+            ->select(DB::raw("{$monthExpr} as month"), DB::raw('SUM(amount) as total'))
             ->where('user_id', $user->id)
             ->whereBetween('date', [$startDate, $endDate])
-            ->groupBy(DB::raw("DATE_FORMAT(date, '%Y-%m')"))
+            ->groupBy(DB::raw($monthExpr))
             ->orderBy('month')
             ->get()
             ->keyBy('month');
             
         // Get monthly expense data
         $monthlyExpenses = DB::table('expenses')
-            ->select(DB::raw("DATE_FORMAT(date, '%Y-%m') as month"), DB::raw('SUM(amount) as total'))
+            ->select(DB::raw("{$monthExpr} as month"), DB::raw('SUM(amount) as total'))
             ->where('user_id', $user->id)
             ->whereBetween('date', [$startDate, $endDate])
-            ->groupBy(DB::raw("DATE_FORMAT(date, '%Y-%m')"))
+            ->groupBy(DB::raw($monthExpr))
             ->orderBy('month')
             ->get()
             ->keyBy('month');

@@ -95,7 +95,10 @@ class CurrencySeeder extends Seeder
         ];
 
         foreach ($currencies as $currency) {
-            DB::table('currencies')->insertOrIgnore($currency);
+            \App\Models\Currency::firstOrCreate(
+                ['code' => $currency['code']],
+                $currency
+            );
         }
     }
 }

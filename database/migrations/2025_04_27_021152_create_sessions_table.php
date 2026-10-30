@@ -25,7 +25,7 @@ return new class extends Migration
             // Table exists, check if payload column exists and add it if missing
             Schema::table('sessions', function (Blueprint $table) {
                 if (!Schema::hasColumn('sessions', 'payload')) {
-                    $table->text('payload');
+                    $table->text('payload')->nullable();
                 }
                 
                 // Make sure other expected columns exist too

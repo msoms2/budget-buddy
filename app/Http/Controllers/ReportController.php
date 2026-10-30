@@ -162,39 +162,41 @@ class ReportController extends Controller
      */
     private function getComprehensiveMonthlyData($userId, $startDate, $endDate)
     {
-        // Get monthly totals using SQLite-compatible date formatting
+        $monthExpr = \App\Support\SqlDateFormatter::yearMonth('date');
+
+        // Get monthly totals using cross-database date formatting
         $monthlyIncome = DB::table('earnings')
-            ->select(DB::raw("strftime('%Y-%m', date) as month"), DB::raw('SUM(amount) as total'))
+            ->select(DB::raw("{$monthExpr} as month"), DB::raw('SUM(amount) as total'))
             ->where('user_id', $userId)
             ->whereBetween('date', [$startDate, $endDate])
-            ->groupBy(DB::raw("strftime('%Y-%m', date)"))
+            ->groupBy(DB::raw($monthExpr))
             ->get()
             ->keyBy('month');
 
         $monthlyExpenses = DB::table('expenses')
-            ->select(DB::raw("strftime('%Y-%m', date) as month"), DB::raw('SUM(amount) as total'))
+            ->select(DB::raw("{$monthExpr} as month"), DB::raw('SUM(amount) as total'))
             ->where('user_id', $userId)
             ->whereBetween('date', [$startDate, $endDate])
-            ->groupBy(DB::raw("strftime('%Y-%m', date)"))
+            ->groupBy(DB::raw($monthExpr))
             ->get()
             ->keyBy('month');
 
         // Get recurring transactions for stability analysis
         $recurringIncome = DB::table('earnings')
-            ->select(DB::raw("strftime('%Y-%m', date) as month"), DB::raw('SUM(amount) as total'))
+            ->select(DB::raw("{$monthExpr} as month"), DB::raw('SUM(amount) as total'))
             ->where('user_id', $userId)
             ->where('is_recurring', true)
             ->whereBetween('date', [$startDate, $endDate])
-            ->groupBy(DB::raw("strftime('%Y-%m', date)"))
+            ->groupBy(DB::raw($monthExpr))
             ->get()
             ->keyBy('month');
 
         $recurringExpenses = DB::table('expenses')
-            ->select(DB::raw("strftime('%Y-%m', date) as month"), DB::raw('SUM(amount) as total'))
+            ->select(DB::raw("{$monthExpr} as month"), DB::raw('SUM(amount) as total'))
             ->where('user_id', $userId)
             ->where('is_recurring', true)
             ->whereBetween('date', [$startDate, $endDate])
-            ->groupBy(DB::raw("strftime('%Y-%m', date)"))
+            ->groupBy(DB::raw($monthExpr))
             ->get()
             ->keyBy('month');
 
