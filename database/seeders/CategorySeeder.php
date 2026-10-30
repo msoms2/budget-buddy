@@ -41,39 +41,61 @@ class CategorySeeder extends Seeder
 
         // Create Income Categories
         foreach ($incomeCategories as $categoryName => $subcategories) {
-            $category = EarningCategory::factory()->create([
-                'name' => $categoryName,
-                'user_id' => $adminUser->id,
-                'is_system' => true
-            ]);
+            $category = EarningCategory::firstOrCreate(
+                [
+                    'name' => $categoryName,
+                    'is_system' => true,
+                    'parent_id' => null,
+                ],
+                [
+                    'user_id' => $adminUser->id,
+                    'description' => "{$categoryName} income category",
+                ]
+            );
             
             // Create income subcategories
             foreach ($subcategories as $subcategoryName) {
-                EarningCategory::factory()->create([
-                    'name' => $subcategoryName,
-                    'user_id' => $adminUser->id,
-                    'is_system' => true,
-                    'parent_id' => $category->id
-                ]);
+                EarningCategory::firstOrCreate(
+                    [
+                        'name' => $subcategoryName,
+                        'is_system' => true,
+                        'parent_id' => $category->id,
+                    ],
+                    [
+                        'user_id' => $adminUser->id,
+                        'description' => "{$subcategoryName} subcategory",
+                    ]
+                );
             }
         }
 
         // Create Expense Categories and Subcategories
         foreach ($expenseCategories as $categoryName => $subcategories) {
-            $category = ExpenseCategory::factory()->create([
-                'name' => $categoryName,
-                'user_id' => $adminUser->id,
-                'is_system' => true
-            ]);
+            $category = ExpenseCategory::firstOrCreate(
+                [
+                    'name' => $categoryName,
+                    'is_system' => true,
+                    'parent_id' => null,
+                ],
+                [
+                    'user_id' => $adminUser->id,
+                    'description' => "{$categoryName} expense category",
+                ]
+            );
 
             // Create subcategories
             foreach ($subcategories as $subcategoryName) {
-                ExpenseCategory::factory()->create([
-                    'name' => $subcategoryName,
-                    'user_id' => $adminUser->id,
-                    'is_system' => true,
-                    'parent_id' => $category->id
-                ]);
+                ExpenseCategory::firstOrCreate(
+                    [
+                        'name' => $subcategoryName,
+                        'is_system' => true,
+                        'parent_id' => $category->id,
+                    ],
+                    [
+                        'user_id' => $adminUser->id,
+                        'description' => "{$subcategoryName} subcategory",
+                    ]
+                );
             }
         }
     }

@@ -31,6 +31,9 @@ class CountrySeeder extends Seeder
             ['name' => 'Australia', 'code' => 'AU', 'currency_code' => 'AUD', 'flag_emoji' => '🇦🇺'],
             
             // Add more European countries with EUR
+            ['name' => 'Latvia', 'code' => 'LV', 'currency_code' => 'EUR', 'flag_emoji' => '🇱🇻'],
+            ['name' => 'Lithuania', 'code' => 'LT', 'currency_code' => 'EUR', 'flag_emoji' => '🇱🇹'],
+            ['name' => 'Estonia', 'code' => 'EE', 'currency_code' => 'EUR', 'flag_emoji' => '🇪🇪'],
             ['name' => 'Netherlands', 'code' => 'NL', 'currency_code' => 'EUR', 'flag_emoji' => '🇳🇱'],
             ['name' => 'Belgium', 'code' => 'BE', 'currency_code' => 'EUR', 'flag_emoji' => '🇧🇪'],
             ['name' => 'Austria', 'code' => 'AT', 'currency_code' => 'EUR', 'flag_emoji' => '🇦🇹'],
@@ -56,7 +59,10 @@ class CountrySeeder extends Seeder
                     'is_active' => true,
                 ];
 
-                DB::table('countries')->insertOrIgnore($countryData);
+                \App\Models\Country::firstOrCreate(
+                    ['code' => $countryData['code']],
+                    $countryData
+                );
             }
         }
     }

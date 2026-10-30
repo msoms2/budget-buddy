@@ -1,53 +1,26 @@
-# Git
 .git
-.gitignore
 .github
-
-# Docker
-.docker
-docker-compose*.yml
-Dockerfile*
-.dockerignore
-
-# Node.js
+.vercel
+.env
+.env.*
+!.env.example
 node_modules
-npm-debug.log
-yarn-error.log
-*.log
-.npm
-.pnpm-store
-.yarn
-
-# Laravel
 vendor
-storage/framework/cache/**
-storage/framework/sessions/**
-storage/framework/views/**
-storage/logs/**
-bootstrap/cache/**
-.env*
-.phpunit.result.cache
-Homestead.json
-Homestead.yaml
 public/build
 public/hot
 public/storage
-
-# IDE files
-.idea
-.vscode
-*.sublime-project
-*.sublime-workspace
-.phpstorm.meta.php
-_ide_helper*
-
-# System files
-.DS_Store
-Thumbs.db
-*.swp
-*.swo
-
-# Testing
-coverage
-.phpunit.cache
-phpunit.xml
+database/database.sqlite
+storage/logs/*
+storage/framework/cache/data/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/framework/testing/*
+bootstrap/cache/*.php
+composer.phar
+repo-b-deploy-key
+repo-b-deploy-key.pub
+tests
+ssl
+server.log
+npm-debug.log*
+yarn-error.log*

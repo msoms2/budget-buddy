@@ -36,6 +36,10 @@ class AppServiceProvider extends ServiceProvider
         
         // Enable strict mode only in development environments
         Model::preventLazyLoading(!$this->app->isProduction());
+
+        if ($this->app->isProduction() && env('FORCE_HTTPS', true)) {
+            \Illuminate\Support\Facades\URL::forceScheme('https');
+        }
         
         // Add query time logging in local environment
         if ($this->app->environment('local')) {

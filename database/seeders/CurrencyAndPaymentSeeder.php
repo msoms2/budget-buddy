@@ -35,13 +35,16 @@ class CurrencyAndPaymentSeeder extends Seeder
         ];
 
         foreach ($paymentMethods as $name => $description) {
-            PaymentMethod::factory()
-                ->active()
-                ->withName($name)
-                ->create([
-                    'description' => $description,
+            PaymentMethod::firstOrCreate(
+                [
+                    'name' => $name,
                     'user_id' => $admin->id,
-                ]);
+                ],
+                [
+                    'description' => $description,
+                    'is_active' => true,
+                ]
+            );
         }
     }
 }

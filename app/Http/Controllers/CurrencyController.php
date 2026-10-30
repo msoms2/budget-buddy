@@ -485,7 +485,7 @@ class CurrencyController extends Controller
             if (!$defaultCurrency) {
                 // If no system default, try to find EUR or USD as fallback
                 $defaultCurrency = Currency::whereIn('code', ['EUR', 'USD'])
-                    ->orderByRaw("FIELD(code, 'EUR', 'USD')")
+                    ->orderByRaw("CASE WHEN code = 'EUR' THEN 1 WHEN code = 'USD' THEN 2 ELSE 3 END")
                     ->first();
             }
 
